@@ -1,0 +1,28 @@
+FROM golang:1.21
+
+# ワーキングディレクトリを設定
+WORKDIR /app
+
+# go modファイルをコピー
+COPY go.mod go.sum ./
+
+# 依存関係をダウンロード
+RUN go mod download
+
+# Air（ホットリロード用）をインストール - Go 1.21対応バージョン
+RUN go install github.com/cosmtrek/air@v1.49.0
+
+# アプリケーションコードをコピー
+COPY . .
+
+# PostgreSQL用のクライアントをインストール
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
+# 8080番ポートを開放
+EXPOSE 8080
+
+# tmpディレクトリを作成（Air用）
+RUN mkdir -p tmp
+
+# Airでホットリロード開発サーバーを起動
+CMD ["air", "-c", ".air.toml"]
