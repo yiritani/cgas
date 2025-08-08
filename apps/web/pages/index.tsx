@@ -85,7 +85,7 @@ export default function Home() {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Link href="/auth/register" className="flex-1">
-                      <Button className="w-full">
+                      <Button className="w-full inline-flex items-center justify-center rounded-xl">
                         <span className="material-symbols-outlined mr-2 text-sm">
                           person_add
                         </span>
@@ -93,7 +93,10 @@ export default function Home() {
                       </Button>
                     </Link>
                     <Link href="/auth/login" className="flex-1">
-                      <Button variant="secondary" className="w-full">
+                      <Button
+                        variant="secondary"
+                        className="w-full inline-flex items-center justify-center rounded-xl"
+                      >
                         <span className="material-symbols-outlined mr-2 text-sm">
                           login
                         </span>

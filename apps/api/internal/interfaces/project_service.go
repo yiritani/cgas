@@ -14,6 +14,7 @@ type ProjectService interface {
 	UpdateUserProjectRole(projectID, userID uint, role model.Role) error
 	RemoveUserFromProject(projectID, userID uint) error
 	CheckProjectPermission(userID, projectID uint) (*model.ProjectPermissionResponse, error)
+	CheckAdminProjectPermission(userID uint, projectID uint) (*model.ProjectPermissionResponse, error)
 	
 	// ベンダープロジェクト紐付け関連
 	GetVendorRelations(userID, projectID uint) ([]model.ProjectVendorRelation, error)

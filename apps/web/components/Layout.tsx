@@ -74,7 +74,7 @@ export default function Layout({ children }: LayoutProps) {
                   onClick={logout}
                   variant="secondary"
                   size="small"
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-lg flex items-center justify-center"
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined mr-1 text-sm">
                     logout
@@ -88,7 +88,7 @@ export default function Layout({ children }: LayoutProps) {
                   <Button
                     variant="secondary"
                     size="small"
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-lg flex items-center justify-center"
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
                   >
                     <span className="material-symbols-outlined mr-1 text-sm">
                       login
@@ -99,7 +99,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Link href="/auth/register">
                   <Button
                     size="small"
-                    className="bg-white text-blue-600 hover:bg-blue-50 rounded-lg flex items-center justify-center"
+                    className="bg-white text-blue-600 hover:bg-blue-50 rounded-xl inline-flex items-center justify-center"
                   >
                     <span className="material-symbols-outlined mr-1 text-sm">
                       person_add

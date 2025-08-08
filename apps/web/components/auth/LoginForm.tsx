@@ -220,7 +220,7 @@ export default function LoginForm() {
               type="submit"
               disabled={loading}
               size="large"
-              className="w-full rounded-3xl py-4 bg-gradient-to-r from-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+              className="w-full rounded-xl py-4 bg-gradient-to-r from-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none inline-flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -229,7 +229,7 @@ export default function LoginForm() {
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined mr-2 text-lg leading-none">
+                  <span className="material-symbols-outlined mr-2 text-base leading-none">
                     login
                   </span>
                   <span className="leading-none">ログイン</span>

@@ -22,6 +22,12 @@ func NewOrganizationFixtures(db *gorm.DB) *OrganizationFixtures {
 func (f *OrganizationFixtures) GetDefaultOrganizations() []model.Organization {
 	return []model.Organization{
 		{
+			Name:        "管理者組織",
+			Description: "管理者の組織",
+			Status:      model.OrgStatusActive,
+			OrganizationType: model.OrganizationTypeAdmin,
+		},
+		{
 			Name:        "三政党",
 			Description: "三政党の組織",
 			Status:      model.OrgStatusActive,
@@ -92,6 +98,11 @@ func (f *OrganizationFixtures) GetOrganizationByName(name string) (*model.Organi
 		return nil, err
 	}
 	return &org, nil
+}
+
+// GetOrganizationAdmin は管理者を取得
+func (f *OrganizationFixtures) GetOrganizationAdmin() (*model.Organization, error) {
+	return f.GetOrganizationByName("管理者組織")
 }
 
 // GetOrganizationSanseitou は三政党を取得

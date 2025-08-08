@@ -176,20 +176,20 @@ func RequireProjectRole(projectID uint, requiredRole model.Role) gin.HandlerFunc
 	}
 }
 
-// CheckSystemAdminPermission はシステム管理者権限をチェック
+// CheckSystemAdminPermission は管理者プロジェクトでの権限をチェック
 func CheckSystemAdminPermission(userID uint) (bool, error) {
-	var systemProject model.Project
-	if err := database.DB.Where("name = ?", "システム").First(&systemProject).Error; err != nil {
+	var adminProject model.Project
+	if err := database.DB.Where("name = ? AND project_type = ?", "管理者プロジェクト", model.ProjectTypeAdmin).First(&adminProject).Error; err != nil {
 		return false, err
 	}
 
 	var userProjectRole model.UserProjectRole
-	err := database.DB.Where("user_id = ? AND project_id = ?", userID, systemProject.ID).First(&userProjectRole).Error
+	err := database.DB.Where("user_id = ? AND project_id = ?", userID, adminProject.ID).First(&userProjectRole).Error
 	if err != nil {
 		return false, nil // ロールが見つからない場合は権限なし
 	}
 
-	// owner または admin ロールのみシステム管理者とする
+	// owner または admin ロールのみ管理者とする
 	return userProjectRole.Role == model.RoleOwner || userProjectRole.Role == model.RoleAdmin, nil
 }
 

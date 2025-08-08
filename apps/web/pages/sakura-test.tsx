@@ -91,10 +91,17 @@ export default function SakuraTest() {
                 marginTop: '1rem',
               }}
             >
-              <Button onClick={() => setCount(count + 1)}>
+              <Button
+                onClick={() => setCount(count + 1)}
+                className="inline-flex items-center justify-center rounded-xl"
+              >
                 カウント: {count}
               </Button>
-              <Button variant="secondary" onClick={() => setCount(0)}>
+              <Button
+                variant="secondary"
+                onClick={() => setCount(0)}
+                className="inline-flex items-center justify-center rounded-xl"
+              >
                 リセット
               </Button>
               <IconButton icon="favorite">お気に入り</IconButton>
@@ -121,7 +128,12 @@ export default function SakuraTest() {
                   これはSakura
                   UIのカードコンポーネントです。デジタル庁のデザインシステムに基づいています。
                 </p>
-                <Button style={{ marginTop: '1rem' }}>詳細を見る</Button>
+                <Button
+                  style={{ marginTop: '1rem' }}
+                  className="inline-flex items-center justify-center rounded-xl"
+                >
+                  詳細を見る
+                </Button>
               </Card>
               <Card>
                 <H3>カード2</H3>
@@ -129,7 +141,11 @@ export default function SakuraTest() {
                   Tailwind
                   CSSとReactを使用して実装されており、アクセシビリティにも配慮されています。
                 </p>
-                <Button variant="secondary" style={{ marginTop: '1rem' }}>
+                <Button
+                  variant="secondary"
+                  style={{ marginTop: '1rem' }}
+                  className="inline-flex items-center justify-center rounded-xl"
+                >
                   もっと見る
                 </Button>
               </Card>
@@ -234,8 +250,17 @@ export default function SakuraTest() {
                   </Checkbox>
 
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button type="submit">送信</Button>
-                    <Button variant="secondary" type="button">
+                    <Button
+                      type="submit"
+                      className="inline-flex items-center justify-center rounded-xl"
+                    >
+                      送信
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-xl"
+                    >
                       キャンセル
                     </Button>
                   </div>
@@ -264,7 +289,12 @@ export default function SakuraTest() {
                   <Td>yamada@example.com</Td>
                   <Td>アクティブ</Td>
                   <Td>
-                    <Button size="small">編集</Button>
+                    <Button
+                      size="small"
+                      className="inline-flex items-center justify-center rounded-xl"
+                    >
+                      編集
+                    </Button>
                   </Td>
                 </Tr>
                 <Tr>
@@ -273,7 +303,11 @@ export default function SakuraTest() {
                   <Td>sato@example.com</Td>
                   <Td>非アクティブ</Td>
                   <Td>
-                    <Button size="small" variant="secondary">
+                    <Button
+                      size="small"
+                      variant="secondary"
+                      className="inline-flex items-center justify-center rounded-xl"
+                    >
                       編集
                     </Button>
                   </Td>

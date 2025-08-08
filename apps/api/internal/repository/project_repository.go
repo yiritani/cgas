@@ -204,3 +204,48 @@ func (r *projectRepository) InsertVendorRelation(relation *model.ProjectVendorRe
 func (r *projectRepository) DeleteVendorRelation(relationID uint) error {
 	return r.db.Delete(&model.ProjectVendorRelation{}, relationID).Error
 }
+
+// CheckAdminProjectPermission は管理者プロジェクトでの権限をチェック
+func (r *projectRepository) CheckAdminProjectPermission(userID uint) (*model.ProjectPermissionResponse, error) {
+	// 管理者プロジェクトを取得
+	var adminProject model.Project
+	if err := r.db.Where("name = ? AND project_type = ?", "管理者プロジェクト", "admin").First(&adminProject).Error; err != nil {
+		return &model.ProjectPermissionResponse{
+			HasAccess: false,
+			CanView:   false,
+			CanEdit:   false,
+			CanManage: false,
+		}, nil // 管理者プロジェクトが見つからない場合は権限なし
+	}
+
+	// ユーザーが管理者プロジェクトのメンバーかチェック
+	var userRole model.UserProjectRole
+	if err := r.db.Where("user_id = ? AND project_id = ?", userID, adminProject.ID).First(&userRole).Error; err != nil {
+		return &model.ProjectPermissionResponse{
+			HasAccess: false,
+			CanView:   false,
+			CanEdit:   false,
+			CanManage: false,
+		}, nil // 管理者プロジェクトのメンバーでない場合は権限なし
+	}
+
+	// 管理者プロジェクトでowner/adminロールの場合は全権限付与
+	if userRole.Role == model.RoleOwner || userRole.Role == model.RoleAdmin {
+		return &model.ProjectPermissionResponse{
+			HasAccess: true,
+			Role:      userRole.Role,
+			CanView:   true,
+			CanEdit:   true,
+			CanManage: true,
+		}, nil
+	}
+
+	// その他のロールは閲覧のみ
+	return &model.ProjectPermissionResponse{
+		HasAccess: true,
+		Role:      userRole.Role,
+		CanView:   true,
+		CanEdit:   false,
+		CanManage: false,
+	}, nil
+}

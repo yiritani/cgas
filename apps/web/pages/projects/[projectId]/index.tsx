@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../contexts/AuthContext'
 import Layout from '../../../components/Layout'
+import AuthGuard from '../../../components/AuthGuard'
 import ProjectMembers, {
   ProjectMember,
   PaginationInfo,
@@ -223,36 +224,6 @@ export default function ProjectDetail() {
     { value: 'viewer', label: '閲覧者' },
   ]
 
-  if (!user) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-          <Card className="max-w-md w-full text-center p-8 border-2 border-dashed border-blue-200 bg-blue-50">
-            <div className="bg-blue-100 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-              <span className="material-symbols-outlined text-blue-600 text-2xl">
-                lock_person
-              </span>
-            </div>
-            <H2 className="text-xl font-semibold text-gray-900 mb-4">
-              ログインが必要です
-            </H2>
-            <p className="text-gray-600 mb-6">
-              プロジェクトの詳細を確認するには
-              <br />
-              ログインしてください
-            </p>
-            <Link href="/auth/login">
-              <Button className="w-full" size="large">
-                <span className="material-symbols-outlined mr-2">login</span>
-                ログイン
-              </Button>
-            </Link>
-          </Card>
-        </div>
-      </Layout>
-    )
-  }
-
   if (loading) {
     return (
       <Layout>
@@ -346,134 +317,147 @@ export default function ProjectDetail() {
   return (
     <>
       <Head>
-        <title>{project.name} - プロジェクト詳細</title>
+        <title>{project?.name || 'プロジェクト詳細'}</title>
         <meta
           name="description"
-          content={`${project.name}の詳細情報とメンバー一覧`}
+          content={
+            project
+              ? `${project.name}の詳細情報とメンバー一覧`
+              : 'プロジェクトの詳細情報'
+          }
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* パンくずナビ・戻るボタン */}
-          <div className="mb-6">
-            <Link
-              href="/projects"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium"
-            >
-              <span className="material-symbols-outlined mr-2 text-lg">
-                arrow_back
-              </span>
-              プロジェクト一覧に戻る
-            </Link>
-          </div>
+      <AuthGuard
+        promptTitle="プロジェクト詳細の表示にはログインが必要です"
+        promptMessage="プロジェクトの詳細情報を確認するには\nアカウントにログインしてください"
+      >
+        <Layout>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* パンくずナビ・戻るボタン */}
+            <div className="mb-6">
+              <Link
+                href="/projects"
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium"
+              >
+                <span className="material-symbols-outlined mr-2 text-lg">
+                  arrow_back
+                </span>
+                プロジェクト一覧に戻る
+              </Link>
+            </div>
 
-          {/* プロジェクト情報ヘッダー */}
-          <Card className="mb-8 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-blue-200">
-            <div className="p-6 sm:p-8">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                <div className="flex-1">
-                  <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 flex items-center">
-                    <span className="material-symbols-outlined mr-3 text-blue-600 text-3xl sm:text-4xl">
-                      folder_managed
-                    </span>
-                    {project.name}
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border shadow-sm ${
-                        project.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                          : project.status === 'inactive'
-                            ? 'bg-orange-100 text-orange-800 border-orange-200'
-                            : 'bg-gray-100 text-gray-800 border-gray-200'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined mr-1 text-sm">
-                        {project.status === 'active'
-                          ? 'check_circle'
-                          : project.status === 'inactive'
-                            ? 'pause_circle'
-                            : 'archive'}
+            {/* プロジェクト情報ヘッダー */}
+            <Card className="mb-8 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-blue-200">
+              <div className="p-6 sm:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 flex items-center">
+                      <span className="material-symbols-outlined mr-3 text-blue-600 text-3xl sm:text-4xl">
+                        folder_managed
                       </span>
-                      {getStatusDisplay(project.status)}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border shadow-sm ${getRoleBadgeClass(project.user_role)}`}
-                    >
-                      <span className="material-symbols-outlined mr-1 text-sm">
-                        {project.user_role === 'owner'
-                          ? 'crown'
-                          : project.user_role === 'admin'
-                            ? 'admin_panel_settings'
-                            : 'visibility'}
-                      </span>
-                      あなたの役割: {getRoleDisplay(project.user_role)}
-                    </span>
-                  </div>
-
-                  <p className="text-gray-700 text-lg mb-4 leading-relaxed">
-                    {project.description || 'プロジェクトの説明がありません'}
-                  </p>
-
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <span className="material-symbols-outlined mr-2 text-blue-500">
-                        calendar_add_on
-                      </span>
-                      作成日:{' '}
-                      {new Date(project.created_at).toLocaleDateString('ja-JP')}
+                      {project.name}
                     </div>
-                    <div className="flex items-center">
-                      <span className="material-symbols-outlined mr-2 text-green-500">
-                        update
+
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border shadow-sm ${
+                          project.status === 'active'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            : project.status === 'inactive'
+                              ? 'bg-orange-100 text-orange-800 border-orange-200'
+                              : 'bg-gray-100 text-gray-800 border-gray-200'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined mr-1 text-sm">
+                          {project.status === 'active'
+                            ? 'check_circle'
+                            : project.status === 'inactive'
+                              ? 'pause_circle'
+                              : 'archive'}
+                        </span>
+                        {getStatusDisplay(project.status)}
                       </span>
-                      更新日:{' '}
-                      {new Date(project.updated_at).toLocaleDateString('ja-JP')}
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border shadow-sm ${getRoleBadgeClass(project.user_role)}`}
+                      >
+                        <span className="material-symbols-outlined mr-1 text-sm">
+                          {project.user_role === 'owner'
+                            ? 'crown'
+                            : project.user_role === 'admin'
+                              ? 'admin_panel_settings'
+                              : 'visibility'}
+                        </span>
+                        あなたの役割: {getRoleDisplay(project.user_role)}
+                      </span>
+                    </div>
+
+                    <p className="text-gray-700 text-lg mb-4 leading-relaxed">
+                      {project.description || 'プロジェクトの説明がありません'}
+                    </p>
+
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <span className="material-symbols-outlined mr-2 text-blue-500">
+                          calendar_add_on
+                        </span>
+                        作成日:{' '}
+                        {new Date(project.created_at).toLocaleDateString(
+                          'ja-JP'
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <span className="material-symbols-outlined mr-2 text-green-500">
+                          update
+                        </span>
+                        更新日:{' '}
+                        {new Date(project.updated_at).toLocaleDateString(
+                          'ja-JP'
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* プロジェクトアイコン */}
-                <div className="hidden lg:flex items-center justify-center">
-                  <div className="bg-white bg-opacity-60 rounded-2xl p-6 shadow-sm border border-white border-opacity-60">
-                    <span className="material-symbols-outlined text-blue-600 text-6xl">
-                      account_tree
-                    </span>
+                  {/* プロジェクトアイコン */}
+                  <div className="hidden lg:flex items-center justify-center">
+                    <div className="bg-white bg-opacity-60 rounded-2xl p-6 shadow-sm border border-white border-opacity-60">
+                      <span className="material-symbols-outlined text-blue-600 text-6xl">
+                        account_tree
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          {/* プロジェクトアクション */}
-          <QuickActions
-            projectId={projectId}
-            projectType={project.project_type}
-          />
+            {/* プロジェクトアクション */}
+            <QuickActions
+              projectId={projectId}
+              projectType={project.project_type}
+            />
 
-          {/* プロジェクトメンバーセクション */}
-          <ProjectMembers
-            members={members}
-            pagination={pagination}
-            membersLoading={membersLoading}
-            user={user}
-            removingMember={removingMember}
-            changingRole={changingRole}
-            currentPage={currentPage}
-            canRemoveMembers={canRemoveMembers}
-            removeMember={removeMember}
-            changeRole={changeRole}
-            fetchMembers={fetchMembers}
-            getRoleDisplay={getRoleDisplay}
-            getRoleBadgeClass={getRoleBadgeClass}
-            availableRoles={availableRoles}
-          />
-        </div>
-      </Layout>
+            {/* プロジェクトメンバーセクション */}
+            <ProjectMembers
+              members={members}
+              pagination={pagination}
+              membersLoading={membersLoading}
+              user={user}
+              removingMember={removingMember}
+              changingRole={changingRole}
+              currentPage={currentPage}
+              canRemoveMembers={canRemoveMembers}
+              removeMember={removeMember}
+              changeRole={changeRole}
+              fetchMembers={fetchMembers}
+              getRoleDisplay={getRoleDisplay}
+              getRoleBadgeClass={getRoleBadgeClass}
+              availableRoles={availableRoles}
+            />
+          </div>
+        </Layout>
+      </AuthGuard>
     </>
   )
 }

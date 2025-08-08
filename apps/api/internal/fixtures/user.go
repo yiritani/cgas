@@ -25,7 +25,14 @@ func (f *UserFixtures) GetDefaultUsers() ([]model.User, error) {
 		return nil, err
 	}
 
+	adminPass, err := model.HashPassword("admin123")
+	if err != nil {
+		return nil, err
+	}
+
 	users := []model.User{
+		{Name: "管理者", Email: "admin@example.com", Password: adminPass},
+
 		// 管理者・リーダー系
 		{Name: "参政オーナー", Email: "sansei_owner@example.com", Password: userPass},
 		{Name: "参政管理者", Email: "sansei_admin@example.com", Password: userPass},
@@ -92,6 +99,11 @@ func (f *UserFixtures) GetUserByEmail(email string) (*model.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// GetUserAdmin はadminを取得
+func (f *UserFixtures) GetUserAdmin() (*model.User, error) {
+	return f.GetUserByEmail("admin@example.com")
 }
 
 // GetUserSanseiOwner はsansei_ownerを取得

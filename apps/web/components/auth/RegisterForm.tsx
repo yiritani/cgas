@@ -183,7 +183,7 @@ export default function RegisterForm() {
               type="submit"
               disabled={loading}
               size="large"
-              className="w-full bg-gradient-to-r from-purple-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full rounded-xl bg-gradient-to-r from-purple-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none inline-flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -192,7 +192,7 @@ export default function RegisterForm() {
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined mr-2">
+                  <span className="material-symbols-outlined mr-2 text-base">
                     person_add
                   </span>
                   アカウントを作成

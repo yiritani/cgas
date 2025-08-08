@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Layout from '../../../../../components/Layout'
-import { H1, H2, H3, Button, Card } from '@sakura-ui/core'
+import { Button, Card } from '@sakura-ui/core'
 
 // TypeScript interfaces
 interface User {
@@ -58,6 +58,7 @@ export default function CSPAccountMembers() {
   const [cspAccount, setCSPAccount] = useState<CSPAccount | null>(null)
   const [cspMembers, setCSPMembers] = useState<CSPAccountMember[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [projectMembers, setProjectMembers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [membersLoading, setMembersLoading] = useState(false)
   const [error, setError] = useState('')
@@ -150,6 +151,46 @@ export default function CSPAccountMembers() {
       setUsers(data.data || [])
     } catch (error) {
       console.error('Error fetching users:', error)
+    }
+  }
+
+  // プロジェクトメンバー一覧を取得
+  const fetchProjectMembers = async () => {
+    if (!projectId) return
+
+    console.log('Fetching project members for projectId:', projectId)
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/members`)
+      console.log('Project members response status:', response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Project members API error:', response.status, errorText)
+        throw new Error('Failed to fetch project members')
+      }
+
+      const data = await response.json()
+      console.log('Project members response:', data)
+
+      // プロジェクトメンバーからユーザー情報を抽出（nullやundefinedを除外）
+      const members =
+        data.members
+          ?.map((member: any) => ({
+            id: member.user_id,
+            full_name: member.name,
+            username: member.name,
+            email: member.email,
+            role: member.role,
+            status: 'active',
+          }))
+          .filter((user: any) => user && user.id) || []
+      console.log('Extracted project members:', members)
+      setProjectMembers(members)
+    } catch (error) {
+      console.error('Error fetching project members:', error)
+      // プロジェクトメンバーが取得できない場合は全ユーザーを取得
+      fetchUsers()
     }
   }
 
@@ -270,9 +311,11 @@ export default function CSPAccountMembers() {
   useEffect(() => {
     if (projectId && cspAccountId) {
       setLoading(true)
-      Promise.all([fetchCSPAccount(), fetchCSPMembers(), fetchUsers()]).finally(
-        () => setLoading(false)
-      )
+      Promise.all([
+        fetchCSPAccount(),
+        fetchCSPMembers(),
+        fetchProjectMembers(),
+      ]).finally(() => setLoading(false))
     }
   }, [projectId, cspAccountId, fetchCSPMembers])
 
@@ -283,9 +326,9 @@ export default function CSPAccountMembers() {
           <Card className="text-center p-8 bg-white">
             <div className="flex flex-col items-center">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
-              <H2 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="text-lg font-semibold text-gray-900 mb-2">
                 データを読み込み中...
-              </H2>
+              </div>
               <p className="text-gray-600 text-sm">しばらくお待ちください</p>
             </div>
           </Card>
@@ -304,16 +347,16 @@ export default function CSPAccountMembers() {
                 error
               </span>
             </div>
-            <H2 className="text-xl font-semibold text-red-900 mb-3">
+            <div className="text-xl font-semibold text-red-900 mb-3">
               CSPアカウントが見つかりません
-            </H2>
+            </div>
             <p className="text-red-800 mb-6">
               指定されたCSPアカウントは存在しないか、
               <br />
               アクセス権限がありません
             </p>
             <Link href={`/projects/${projectId}/csp-accounts`}>
-              <Button className="w-full">
+              <Button className="w-full inline-flex items-center justify-center rounded-xl py-3 px-6">
                 <span className="material-symbols-outlined mr-2">
                   arrow_back
                 </span>
@@ -514,7 +557,11 @@ export default function CSPAccountMembers() {
 
         {/* アクションボタン */}
         <div className="mb-8">
-          <Button onClick={openAddMemberModal} size="large">
+          <Button
+            onClick={openAddMemberModal}
+            size="large"
+            className="inline-flex items-center justify-center rounded-xl py-3 px-6"
+          >
             <span className="material-symbols-outlined mr-2">person_add</span>
             SSOユーザーを追加
           </Button>
@@ -523,12 +570,12 @@ export default function CSPAccountMembers() {
         {/* SSOユーザー一覧 */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <H2 className="text-2xl font-semibold text-gray-900 flex items-center">
+            <div className="text-2xl font-semibold text-gray-900 flex items-center">
               <span className="material-symbols-outlined mr-3 text-blue-600">
                 group
               </span>
               SSOユーザー一覧
-            </H2>
+            </div>
             {!membersLoading && cspMembers.length > 0 && (
               <div className="bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
                 <span className="text-blue-800 font-medium text-sm">
@@ -556,15 +603,19 @@ export default function CSPAccountMembers() {
                     person_off
                   </span>
                 </div>
-                <H2 className="text-xl font-semibold text-gray-900 mb-3">
+                <div className="text-xl font-semibold text-gray-900 mb-3">
                   SSOユーザーが登録されていません
-                </H2>
+                </div>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   CSPアカウントにアクセスするユーザーを
                   <br />
                   追加してください
                 </p>
-                <Button onClick={openAddMemberModal} size="large">
+                <Button
+                  onClick={openAddMemberModal}
+                  size="large"
+                  className="inline-flex items-center justify-center rounded-xl py-3 px-6"
+                >
                   <span className="material-symbols-outlined mr-2">
                     person_add
                   </span>
@@ -589,11 +640,11 @@ export default function CSPAccountMembers() {
                           </span>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <H3 className="text-lg font-semibold text-gray-900 truncate mt-0">
+                          <div className="text-lg font-semibold text-gray-900 truncate">
                             {member.user?.full_name ||
                               member.user?.username ||
                               `User ${member.user_id}`}
-                          </H3>
+                          </div>
                           <div className="flex items-center gap-2 mt-2">
                             {getRoleBadge(member.role)}
                             {getStatusBadge(member.status)}
@@ -656,7 +707,7 @@ export default function CSPAccountMembers() {
                         onClick={() => removeCSPMember(member.id)}
                         variant="secondary"
                         size="small"
-                        className="w-full bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300"
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300 inline-flex items-center justify-center rounded-xl py-2 px-4"
                       >
                         <span className="material-symbols-outlined mr-2 text-sm">
                           person_remove
@@ -684,9 +735,9 @@ export default function CSPAccountMembers() {
               <div className="p-6">
                 {/* モーダルヘッダー */}
                 <div className="flex items-center justify-between mb-6">
-                  <H3 className="text-xl font-semibold text-gray-900 mt-0">
+                  <div className="text-xl font-semibold text-gray-900">
                     SSOユーザーを追加
-                  </H3>
+                  </div>
                   <button
                     className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                     onClick={() => setShowAddMemberModal(false)}
@@ -717,9 +768,11 @@ export default function CSPAccountMembers() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value={0}>ユーザーを選択してください</option>
-                      {users
+                      {projectMembers
                         .filter(
                           (user) =>
+                            user &&
+                            user.id &&
                             !cspMembers.some(
                               (member) => member.user_id === user.id
                             )
@@ -801,7 +854,7 @@ export default function CSPAccountMembers() {
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button
                       onClick={addCSPMember}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl py-3 px-6"
                       size="large"
                     >
                       <span className="material-symbols-outlined mr-2">
@@ -812,7 +865,7 @@ export default function CSPAccountMembers() {
                     <Button
                       onClick={() => setShowAddMemberModal(false)}
                       variant="secondary"
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl py-3 px-6"
                       size="large"
                     >
                       <span className="material-symbols-outlined mr-2">

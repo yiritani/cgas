@@ -24,4 +24,7 @@ type ProjectRepository interface {
 	SelectVendorRelationsByProjectID(projectID uint) ([]model.ProjectVendorRelation, error)
 	InsertVendorRelation(relation *model.ProjectVendorRelation) error
 	DeleteVendorRelation(relationID uint) error
+	
+	// 管理者権限関連
+	CheckAdminProjectPermission(userID uint) (*model.ProjectPermissionResponse, error)
 }

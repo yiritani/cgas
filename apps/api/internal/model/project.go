@@ -43,6 +43,7 @@ const (
 	ProjectTypePublicSaas   ProjectType = "publicSaas"  
 	ProjectTypeIndependent  ProjectType = "independent" 
 	ProjectTypeVendor       ProjectType = "vendor" 
+	ProjectTypeAdmin ProjectType = "admin" 
 )
 
 // ValidProjectStatuses は有効なプロジェクトステータスの一覧

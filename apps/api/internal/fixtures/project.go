@@ -25,6 +25,11 @@ func NewProjectFixtures(db *gorm.DB, orgFixtures *OrganizationFixtures) *Project
 // GetDefaultProjects はデフォルトプロジェクトの配列を返す（組織ID付き）
 func (f *ProjectFixtures) GetDefaultProjects() ([]model.Project, error) {
 	// 組織を取得
+	adminOrg, err := f.orgFixtures.GetOrganizationAdmin()
+	if err != nil {
+		return nil, err
+	}
+
 	sanseitouOrg, err := f.orgFixtures.GetOrganizationSanseitou()
 	if err != nil {
 		return nil, err
@@ -51,6 +56,13 @@ func (f *ProjectFixtures) GetDefaultProjects() ([]model.Project, error) {
 	}
 
 	projects := []model.Project{
+		{
+			Name:           "管理者プロジェクト",
+			Description:    "管理者のプロジェクト",
+			Status:         model.ProjectStatusActive,
+			OrganizationID: adminOrg.ID,
+			ProjectType:    model.ProjectTypeAdmin,
+		},
 		{
 			Name:           "参政第一プロジェクト",
 			Description:    "参政第一のプロジェクト",
@@ -154,6 +166,11 @@ func (f *ProjectFixtures) GetProjectByName(name string) (*model.Project, error) 
 		return nil, err
 	}
 	return &project, nil
+}
+
+// GetProjectAdmin は管理者プロジェクトを取得
+func (f *ProjectFixtures) GetProjectAdmin() (*model.Project, error) {
+	return f.GetProjectByName("管理者プロジェクト")
 }
 
 // GetProjectSanseitou は三政党プロジェクトを取得

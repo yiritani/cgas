@@ -31,6 +31,7 @@ const (
 	OrganizationTypePublicSaas OrganizationType = "public_saas"
 	OrganizationTypeIndependent OrganizationType = "independent"
 	OrganizationTypeVendor OrganizationType = "vendor"
+	OrganizationTypeAdmin OrganizationType = "admin"
 )
 
 // OrgStatus は組織のステータスを定義する型

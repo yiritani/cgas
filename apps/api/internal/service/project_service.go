@@ -341,3 +341,19 @@ func (s *projectService) DeleteVendorRelation(userID, projectID, relationID uint
 
 	return s.projectRepo.DeleteVendorRelation(relationID)
 }
+
+// CheckAdminProjectPermission は管理者プロジェクトでの権限をチェック
+func (s *projectService) CheckAdminProjectPermission(userID uint, projectID uint) (*model.ProjectPermissionResponse, error) {
+	// 管理者プロジェクトでの権限をチェック
+	adminProjectPermission, err := s.projectRepo.CheckAdminProjectPermission(userID)
+	if err != nil {
+		return &model.ProjectPermissionResponse{
+			HasAccess: false,
+			CanView:   false,
+			CanEdit:   false,
+			CanManage: false,
+		}, nil
+	}
+
+	return adminProjectPermission, nil
+}

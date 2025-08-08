@@ -27,6 +27,15 @@ func NewUserProjectRoleFixtures(db *gorm.DB, userFixtures *UserFixtures, project
 // GetDefaultUserProjectRoles はデフォルトユーザープロジェクトロールの設定を返す  
 func (f *UserProjectRoleFixtures) GetDefaultUserProjectRoles() ([]model.UserProjectRole, error) {
 	// プロジェクトを取得
+	adminProject, err := f.projectFixtures.GetProjectAdmin()
+	if err != nil {
+		return nil, err
+	}
+	adminUser, err := f.userFixtures.GetUserAdmin()
+	if err != nil {
+		return nil, err
+	}
+	
 	sanseitouProject1, err := f.projectFixtures.GetProjectSanseitou1()
 	if err != nil {
 		return nil, err
@@ -116,6 +125,9 @@ func (f *UserProjectRoleFixtures) GetDefaultUserProjectRoles() ([]model.UserProj
 
 	// ユーザープロジェクトロールを作成
 	userProjectRoles := []model.UserProjectRole{
+		// === 管理者プロジェクト ===
+		{UserID: adminUser.ID, ProjectID: adminProject.ID, Role: model.RoleOwner},
+
 		// === 参政党プロジェクト群 ===
 		// 参政第一プロジェクト
 		{UserID: sanseiOwner.ID, ProjectID: sanseitouProject1.ID, Role: model.RoleOwner},
