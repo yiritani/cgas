@@ -9,10 +9,12 @@ interface User {
   id: number
   username: string
   email: string
-  full_name: string
+  name: string
   role: string
   status: string
-  created_at: string
+  created_at?: string
+  vendor_project_name?: string
+  is_vendor_member?: boolean
 }
 
 interface CSPAccount {
@@ -59,6 +61,7 @@ export default function CSPAccountMembers() {
   const [cspMembers, setCSPMembers] = useState<CSPAccountMember[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [projectMembers, setProjectMembers] = useState<User[]>([])
+  const [vendorProjectMembers, setVendorProjectMembers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [membersLoading, setMembersLoading] = useState(false)
   const [error, setError] = useState('')
@@ -76,7 +79,7 @@ export default function CSPAccountMembers() {
   })
 
   // CSPアカウント情報を取得
-  const fetchCSPAccount = async () => {
+  const fetchCSPAccount = useCallback(async () => {
     if (!projectId || !cspAccountId) return
 
     try {
@@ -98,7 +101,7 @@ export default function CSPAccountMembers() {
       console.error('Error fetching CSP account:', error)
       setError('CSPアカウント情報の取得に失敗しました')
     }
-  }
+  }, [projectId, cspAccountId])
 
   // CSPメンバー一覧を取得
   const fetchCSPMembers = useCallback(async () => {
@@ -106,7 +109,6 @@ export default function CSPAccountMembers() {
 
     try {
       setMembersLoading(true)
-      console.log('Fetching CSP members for account ID:', cspAccountId)
 
       const response = await fetch(
         `/api/csp-account-members?csp_account_id=${cspAccountId}`,
@@ -115,20 +117,16 @@ export default function CSPAccountMembers() {
         }
       )
 
-      console.log('Response status:', response.status)
-
       if (!response.ok) {
         const errorData = await response
           .json()
           .catch(() => ({ error: `HTTP ${response.status}` }))
-        console.error('API Error:', errorData)
         throw new Error(
           errorData.error || `Failed to fetch CSP members (${response.status})`
         )
       }
 
       const data = await response.json()
-      console.log('CSP members data:', data)
       setCSPMembers(data.data || [])
       setError('')
     } catch (error) {
@@ -154,15 +152,106 @@ export default function CSPAccountMembers() {
     }
   }
 
-  // プロジェクトメンバー一覧を取得
-  const fetchProjectMembers = async () => {
+  // ベンダープロジェクトの関連を取得
+  const fetchVendorRelations = useCallback(async () => {
+    if (!projectId) return []
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/vendor-relations`
+      )
+      if (!response.ok) {
+        console.log('No vendor relations found or access denied')
+        return []
+      }
+
+      const data = await response.json()
+      return data || []
+    } catch (error) {
+      console.error('Error fetching vendor relations:', error)
+      return []
+    }
+  }, [projectId])
+
+  // ベンダープロジェクトメンバーを取得
+  const fetchVendorProjectMembers = useCallback(async () => {
     if (!projectId) return
 
-    console.log('Fetching project members for projectId:', projectId)
+    try {
+      const vendorRelations = await fetchVendorRelations()
+
+      if (vendorRelations.length === 0) {
+        setVendorProjectMembers([])
+        return
+      }
+
+      const allVendorMembers = []
+
+      for (const relation of vendorRelations) {
+        const vendorProjectId =
+          relation.vendor_project_id || relation.vendor_project?.id
+        if (!vendorProjectId) continue
+
+        try {
+          const response = await fetch(
+            `/api/projects/${vendorProjectId}/members`
+          )
+
+          if (response.ok) {
+            const data = await response.json()
+
+            const members =
+              data.members
+                ?.map((member: any) => {
+                  return {
+                    id: member.user_id,
+                    full_name:
+                      member.name ||
+                      member.full_name ||
+                      `User ${member.user_id}`,
+                    username:
+                      member.name || member.username || `user${member.user_id}`,
+                    email: member.email || 'no-email@example.com',
+                    role: member.role || 'viewer',
+                    status: 'active',
+                    vendor_project_name:
+                      relation.vendor_project?.name ||
+                      `Project ${vendorProjectId}`,
+                    is_vendor_member: true,
+                  }
+                })
+                .filter(
+                  (user: any) => user && user.id && user.full_name && user.email
+                ) || []
+
+            allVendorMembers.push(...members)
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching vendor project ${vendorProjectId} members:`,
+            error
+          )
+        }
+      }
+
+      // 重複するユーザーIDを除去（同じユーザーが複数のベンダープロジェクトに属している場合）
+      const uniqueVendorMembers = allVendorMembers.filter(
+        (member, index, self) =>
+          self.findIndex((m) => m.id === member.id) === index
+      )
+
+      setVendorProjectMembers(uniqueVendorMembers)
+    } catch (error) {
+      setVendorProjectMembers([])
+    }
+  }, [projectId, fetchVendorRelations])
+
+  // プロジェクトメンバー一覧を取得
+  const fetchProjectMembers = useCallback(async () => {
+    if (!projectId) return
 
     try {
       const response = await fetch(`/api/projects/${projectId}/members`)
-      console.log('Project members response status:', response.status)
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -171,28 +260,33 @@ export default function CSPAccountMembers() {
       }
 
       const data = await response.json()
-      console.log('Project members response:', data)
 
       // プロジェクトメンバーからユーザー情報を抽出（nullやundefinedを除外）
       const members =
         data.members
-          ?.map((member: any) => ({
-            id: member.user_id,
-            full_name: member.name,
-            username: member.name,
-            email: member.email,
-            role: member.role,
-            status: 'active',
-          }))
-          .filter((user: any) => user && user.id) || []
-      console.log('Extracted project members:', members)
+          ?.map((member: any) => {
+            return {
+              id: member.user_id,
+              full_name:
+                member.name || member.full_name || `User ${member.user_id}`,
+              username:
+                member.name || member.username || `user${member.user_id}`,
+              email: member.email || 'no-email@example.com',
+              role: member.role || 'viewer',
+              status: 'active',
+              is_vendor_member: false,
+            }
+          })
+          .filter(
+            (user: any) => user && user.id && user.full_name && user.email
+          ) || []
       setProjectMembers(members)
     } catch (error) {
       console.error('Error fetching project members:', error)
       // プロジェクトメンバーが取得できない場合は全ユーザーを取得
       fetchUsers()
     }
-  }
+  }, [projectId])
 
   // SSOユーザーを追加
   const addCSPMember = async () => {
@@ -246,22 +340,13 @@ export default function CSPAccountMembers() {
       setError('')
       setSuccess('')
 
-      console.log('Attempting to delete CSP member with ID:', memberId)
-
       const response = await fetch(`/api/csp-account-members/${memberId}`, {
         method: 'DELETE',
         credentials: 'include',
       })
 
-      console.log('Delete response status:', response.status)
-      console.log(
-        'Delete response headers:',
-        Object.fromEntries(response.headers.entries())
-      )
-
       // レスポンステキストを取得してログ出力
       const responseText = await response.text()
-      console.log('Delete response text:', responseText)
 
       if (!response.ok) {
         let errorData
@@ -280,9 +365,8 @@ export default function CSPAccountMembers() {
       let successData
       try {
         successData = JSON.parse(responseText)
-        console.log('Delete success data:', successData)
       } catch (parseError) {
-        console.log('Success response is not JSON, but request succeeded')
+        console.error('Success response is not JSON, but request succeeded')
       }
 
       setSuccess('SSOユーザーを削除しました')
@@ -315,9 +399,17 @@ export default function CSPAccountMembers() {
         fetchCSPAccount(),
         fetchCSPMembers(),
         fetchProjectMembers(),
+        fetchVendorProjectMembers(),
       ]).finally(() => setLoading(false))
     }
-  }, [projectId, cspAccountId, fetchCSPMembers])
+  }, [
+    projectId,
+    cspAccountId,
+    fetchCSPAccount,
+    fetchCSPMembers,
+    fetchProjectMembers,
+    fetchVendorProjectMembers,
+  ])
 
   if (loading) {
     return (
@@ -641,7 +733,7 @@ export default function CSPAccountMembers() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-lg font-semibold text-gray-900 truncate">
-                            {member.user?.full_name ||
+                            {member.user?.name ||
                               member.user?.username ||
                               `User ${member.user_id}`}
                           </div>
@@ -768,20 +860,54 @@ export default function CSPAccountMembers() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value={0}>ユーザーを選択してください</option>
-                      {projectMembers
-                        .filter(
-                          (user) =>
-                            user &&
-                            user.id &&
-                            !cspMembers.some(
-                              (member) => member.user_id === user.id
+
+                      {/* プロジェクトメンバー */}
+                      {projectMembers.length > 0 && (
+                        <optgroup label="プロジェクトメンバー">
+                          {projectMembers
+                            .filter(
+                              (user) =>
+                                user &&
+                                user.id &&
+                                !cspMembers.some(
+                                  (member) => member.user_id === user.id
+                                )
                             )
-                        )
-                        .map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.full_name || user.username} ({user.email})
-                          </option>
-                        ))}
+                            .map((user) => (
+                              <option
+                                key={`project-${user.id}`}
+                                value={user.id}
+                              >
+                                {user.name} ({user.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+
+                      {/* 事業者プロジェクトメンバー */}
+                      {vendorProjectMembers.length > 0 && (
+                        <optgroup label="事業者プロジェクトメンバー">
+                          {vendorProjectMembers
+                            .filter(
+                              (user) =>
+                                user &&
+                                user.id &&
+                                !cspMembers.some(
+                                  (member) => member.user_id === user.id
+                                ) &&
+                                !projectMembers.some(
+                                  (member) => member.id === user.id
+                                )
+                            )
+                            .map((user) => (
+                              <option key={`vendor-${user.id}`} value={user.id}>
+                                {user.name} ({user.email})
+                                {user.vendor_project_name &&
+                                  ` - ${user.vendor_project_name}`}
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
 
