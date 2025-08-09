@@ -4,11 +4,12 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=development
       - API_URL=http://api:8080
       - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - CSP_PROVISIONING_URL=http://csp-provisioning:8081
     volumes:
       - ./apps/web:/app
       - /app/node_modules
@@ -34,17 +35,19 @@ services:
       context: ./apps/web_admin
       dockerfile: Dockerfile.dev
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8080
       - API_URL=http://api:8080
+      - CSP_PROVISIONING_URL=http://csp-provisioning:8081
     volumes:
       - ./apps/web_admin:/app
       - /app/node_modules
       - /app/.next
     depends_on:
       - api
+      - csp-provisioning
     develop:
       watch:
         - action: sync
@@ -61,17 +64,19 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile.dev
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       - GIN_MODE=debug
       - DB_TYPE=postgres
       - DATABASE_URL=postgres://postgres:password@db:5432/go_nextjs_db?sslmode=disable
       - PORT=8080
       - JWT_SECRET=your-secret-key-change-this-in-production
+      - CSP_PROVISIONING_URL=http://csp-provisioning:8081
     volumes:
       - ./apps/api:/app
     depends_on:
       - db
+      - csp-provisioning
     develop:
       watch:
         - action: rebuild
@@ -82,6 +87,32 @@ services:
           path: ./apps/api
           target: /app
 
+  csp-provisioning:
+    build:
+      context: ./apps/csp-provisioning-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - '8081:8081'
+    environment:
+      - GIN_MODE=debug
+      - DATABASE_URL=postgres://postgres:password@csp-provisioning-db:5432/csp_provisioning_db?sslmode=disable
+      - PORT=8081
+      - JWT_SECRET=your-secret-key-change-this-in-production
+      - MAIN_API_URL=http://api:8080
+    volumes:
+      - ./apps/csp-provisioning-service:/app
+    depends_on:
+      - csp-provisioning-db
+    develop:
+      watch:
+        - action: rebuild
+          path: ./apps/csp-provisioning-service/go.mod
+        - action: rebuild
+          path: ./apps/csp-provisioning-service/go.sum
+        - action: sync+restart
+          path: ./apps/csp-provisioning-service
+          target: /app
+
   db:
     image: postgres:16
     environment:
@@ -89,12 +120,27 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=go_nextjs_db
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     # 開発用：データ永続化を無効にする場合
     # tmpfs:
     #   - /var/lib/postgresql/data
 
+  csp-provisioning-db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=csp_provisioning_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - csp_provisioning_data_dev:/var/lib/postgresql/data
+    # 開発用：データ永続化を無効にする場合
+    # tmpfs:
+    #   - /var/lib/postgresql/data
+
 volumes:
   postgres_data_dev:
+  csp_provisioning_data_dev:

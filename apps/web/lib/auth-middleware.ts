@@ -58,9 +58,43 @@ const createApiCall = (token: string, res: NextApiResponse) => {
       : `${API_URL}/api/${url}`
 
     // DELETEリクエストの場合はContent-Typeを設定しない
-    const headers: Record<string, string> = {
+    const headers: HeadersInit = {
       Authorization: `Bearer ${token}`,
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
+    }
+
+    // ボディがある場合のみContent-Typeを設定
+    if (options.body && options.method !== 'DELETE') {
+      headers['Content-Type'] = 'application/json'
+    }
+
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers,
+    })
+
+    // 認証エラーの場合はcookieを削除
+    if (response.status === 401) {
+      clearAuthCookieInternal(res)
+    }
+
+    return response
+  }
+}
+
+// CSP Provisioning Service用のAPIコール関数を作成
+const createCSPProvisioningApiCall = (token: string, res: NextApiResponse) => {
+  return async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const CSP_PROVISIONING_URL =
+      process.env.CSP_PROVISIONING_URL || 'http://localhost:8081'
+    const fullUrl = url.startsWith('/')
+      ? `${CSP_PROVISIONING_URL}/api${url}`
+      : `${CSP_PROVISIONING_URL}/api/${url}`
+
+    // DELETEリクエストの場合はContent-Typeを設定しない
+    const headers: HeadersInit = {
+      Authorization: `Bearer ${token}`,
+      ...(options.headers as Record<string, string>),
     }
 
     // ボディがある場合のみContent-Typeを設定
@@ -119,6 +153,38 @@ export function withAuth(handler: AuthenticatedHandler) {
       await handler(authenticatedReq, res, apiCall)
     } catch (error) {
       console.error('Auth middleware error:', error)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  }
+}
+
+// CSP Provisioning Service向けの認証が必要なハンドラーをラップするHOF
+export function withCSPProvisioningAuth(handler: AuthenticatedHandler) {
+  return async (req: NextApiRequest, res: NextApiResponse) => {
+    try {
+      // cookieからトークンを取得
+      const cookies = parse(req.headers.cookie || '')
+      const token = cookies['auth-token']
+
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' })
+      }
+
+      // トークンからユーザーIDを取得
+      const userId = getUserIdFromToken(token)
+
+      // リクエストオブジェクトを拡張
+      const authenticatedReq = req as AuthenticatedRequest
+      authenticatedReq.token = token
+      authenticatedReq.userId = userId
+
+      // CSP Provisioning Service用のAPIコール関数を作成
+      const apiCall = createCSPProvisioningApiCall(token, res)
+
+      // 認証済みハンドラーを実行
+      await handler(authenticatedReq, res, apiCall)
+    } catch (error) {
+      console.error('CSP Provisioning auth middleware error:', error)
       res.status(500).json({ error: 'Internal server error' })
     }
   }

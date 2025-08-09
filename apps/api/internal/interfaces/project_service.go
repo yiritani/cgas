@@ -15,6 +15,7 @@ type ProjectService interface {
 	RemoveUserFromProject(projectID, userID uint) error
 	CheckProjectPermission(userID, projectID uint) (*model.ProjectPermissionResponse, error)
 	CheckAdminProjectPermission(userID uint, projectID uint) (*model.ProjectPermissionResponse, error)
+	CanUserManageProject(userID, projectID uint) (bool, error)
 	
 	// ベンダープロジェクト紐付け関連
 	GetVendorRelations(userID, projectID uint) ([]model.ProjectVendorRelation, error)

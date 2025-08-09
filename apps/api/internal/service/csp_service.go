@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"go-nextjs-api/internal/interfaces"
 	"go-nextjs-api/internal/model"
-	"log"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -31,325 +29,6 @@ func NewCSPService(
 	}
 }
 
-// CSPRequest related methods
-
-func (s *cspService) GetAllCSPRequests() ([]model.CSPRequest, error) {
-	return s.cspRepo.SelectCSPRequestAll()
-}
-
-func (s *cspService) GetCSPRequestsWithPagination(page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error) {
-	return s.cspRepo.SelectCSPRequestWithPagination(page, limit)
-}
-
-func (s *cspService) GetCSPRequestByID(id uint) (*model.CSPRequest, error) {
-	return s.cspRepo.SelectCSPRequestByID(id)
-}
-
-func (s *cspService) GetCSPRequestsByProjectID(projectID uint) ([]model.CSPRequest, error) {
-	return s.cspRepo.SelectCSPRequestsByProjectID(projectID)
-}
-
-func (s *cspService) GetCSPRequestsByProjectIDWithPagination(projectID uint, page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error) {
-	return s.cspRepo.SelectCSPRequestsByProjectIDWithPagination(projectID, page, limit)
-}
-
-func (s *cspService) GetCSPRequestsByUserID(userID uint) ([]model.CSPRequest, error) {
-	return s.cspRepo.SelectCSPRequestsByUserID(userID)
-}
-
-func (s *cspService) GetCSPRequestsByStatus(status model.CSPRequestStatus) ([]model.CSPRequest, error) {
-	return s.cspRepo.SelectCSPRequestsByStatus(status)
-}
-
-func (s *cspService) CreateCSPRequest(userID uint, req *model.CSPRequestCreateRequest) (*model.CSPRequest, error) {
-	// プロジェクトへのアクセス権限をチェック
-	hasAccess, err := s.CanUserManageProjectCSPAccount(userID, req.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-	if !hasAccess {
-		return nil, model.ErrInsufficientPermissions
-	}
-
-	// プロジェクトがベンダータイプかチェック
-	projectDetails, err := s.projectRepo.SelectByID(req.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-	if projectDetails.ProjectType == model.ProjectTypeVendor {
-		return nil, errors.New("ベンダープロジェクトではCSPプロビジョニングはご利用いただけません")
-	}
-
-	// プロバイダーの有効性をチェック
-	if !req.Provider.IsValid() {
-		return nil, model.ErrInvalidCSPProvider
-	}
-
-	cspRequest := &model.CSPRequest{
-		ProjectID:   req.ProjectID,
-		UserID:      userID,
-		Provider:    req.Provider,
-		AccountName: req.AccountName,
-		Reason:      req.Reason,
-		Status:      model.CSPRequestStatusPending,
-	}
-
-	err = s.cspRepo.InsertCSPRequest(cspRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.cspRepo.SelectCSPRequestByID(cspRequest.ID)
-}
-
-func (s *cspService) UpdateCSPRequest(id uint, userID uint, req *model.CSPRequestUpdateRequest) (*model.CSPRequest, error) {
-	// 既存の申請を取得
-	existingRequest, err := s.cspRepo.SelectCSPRequestByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// 申請者本人または管理者かチェック
-	if existingRequest.UserID != userID {
-		hasAccess, err := s.CanUserAccessCSPRequest(userID, id)
-		if err != nil {
-			return nil, err
-		}
-		if !hasAccess {
-			return nil, model.ErrInsufficientPermissions
-		}
-	}
-
-	// レビュー済みの申請は更新できない
-	if existingRequest.Status != model.CSPRequestStatusPending {
-		return nil, model.ErrCSPRequestAlreadyReviewed
-	}
-
-	// フィールドを更新
-	if req.AccountName != nil {
-		existingRequest.AccountName = *req.AccountName
-	}
-	if req.Reason != nil {
-		existingRequest.Reason = *req.Reason
-	}
-
-	err = s.cspRepo.UpdateCSPRequest(existingRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.cspRepo.SelectCSPRequestByID(id)
-}
-
-func (s *cspService) ReviewCSPRequest(id uint, reviewerID uint, req *model.CSPRequestReviewRequest) (*model.CSPRequest, error) {
-	// 既存の申請を取得
-	existingRequest, err := s.cspRepo.SelectCSPRequestByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// 管理者権限をチェック（簡易版：実際の実装では適切な権限チェックを行う）
-	// ここでは一旦スキップ
-
-	// 既にレビュー済みかチェック
-	if existingRequest.Status != model.CSPRequestStatusPending {
-		return nil, model.ErrCSPRequestAlreadyReviewed
-	}
-
-	// ステータスの有効性をチェック
-	if !req.Status.IsValid() {
-		return nil, model.ErrInvalidCSPRequestStatus
-	}
-
-	// 却下の場合は理由が必要
-	if req.Status == model.CSPRequestStatusRejected && (req.RejectReason == nil || *req.RejectReason == "") {
-		return nil, errors.New("reject reason is required for rejection")
-	}
-
-	// レビュー情報を更新
-	now := time.Now()
-	existingRequest.Status = req.Status
-	existingRequest.ReviewedBy = &reviewerID
-	existingRequest.ReviewedAt = &now
-	if req.RejectReason != nil {
-		existingRequest.RejectReason = req.RejectReason
-	}
-
-	err = s.cspRepo.UpdateCSPRequest(existingRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	// 承認の場合、自動でCSPアカウントを作成
-	if req.Status == model.CSPRequestStatusApproved {
-		_, err = s.createCSPAccountFromRequest(existingRequest, reviewerID)
-		if err != nil {
-			// ログに記録するが、エラーで処理を止めない（承認は完了している）
-			log.Printf("Failed to create CSP account automatically: %v", err)
-		}
-	}
-
-	return s.cspRepo.SelectCSPRequestByID(id)
-}
-
-// createCSPAccountFromRequest は承認されたCSP申請から自動でCSPアカウントを作成する
-func (s *cspService) createCSPAccountFromRequest(cspRequest *model.CSPRequest, creatorID uint) (*model.CSPAccount, error) {
-	// 既にCSPアカウントが作成されていないかチェック
-	existingAccount, err := s.cspRepo.SelectCSPAccountByCSPRequestID(cspRequest.ID)
-	if err == nil {
-		// 既に存在する場合はそれを返す
-		return existingAccount, nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
-	}
-
-	// CSPアカウントIDを生成（プロバイダー別の形式で）
-	accountID, err := s.generateCSPAccountID(cspRequest.Provider, cspRequest.AccountName)
-	if err != nil {
-		return nil, err
-	}
-
-	// アクセスキーとシークレットキーを生成（ダミー値）
-	accessKey, err := s.generateAccessKey(cspRequest.Provider)
-	if err != nil {
-		return nil, err
-	}
-
-	secretKey, err := s.generateSecretKey(cspRequest.Provider)
-	if err != nil {
-		return nil, err
-	}
-
-	// デフォルトリージョンを設定
-	region := s.getDefaultRegion(cspRequest.Provider)
-
-	// CSPアカウントを作成
-	cspAccount := &model.CSPAccount{
-		Provider:     cspRequest.Provider,
-		AccountName:  cspRequest.AccountName,
-		AccountID:    accountID,
-		AccessKey:    accessKey,
-		SecretKey:    secretKey,
-		Region:       region,
-		Status:       "active",
-		CSPRequestID: cspRequest.ID,
-		CreatedBy:    creatorID,
-	}
-
-	err = s.cspRepo.InsertCSPAccount(cspAccount)
-	if err != nil {
-		return nil, err
-	}
-
-	// プロジェクトとCSPアカウントの関連付けを作成
-	projectCSPAccount := &model.ProjectCSPAccount{
-		ProjectID:    cspRequest.ProjectID,
-		CSPAccountID: cspAccount.ID,
-		CreatedBy:    creatorID,
-	}
-
-	err = s.cspRepo.InsertProjectCSPAccount(projectCSPAccount)
-	if err != nil {
-		log.Printf("Failed to create project-CSP account association: %v", err)
-		// 関連付けに失敗してもCSPアカウント作成は成功とする
-	}
-
-	return s.cspRepo.SelectCSPAccountByID(cspAccount.ID)
-}
-
-// generateCSPAccountID はプロバイダー別のCSPアカウントIDを生成
-func (s *cspService) generateCSPAccountID(provider model.CSPProvider, accountName string) (string, error) {
-	switch provider {
-	case model.CSPProviderAWS:
-		// AWS Account ID形式（12桁の数字）
-		return fmt.Sprintf("123456789012"), nil
-	case model.CSPProviderGCP:
-		// GCP Project ID形式
-		return fmt.Sprintf("project-%s-%d", accountName, time.Now().Unix()), nil
-	case model.CSPProviderAzure:
-		// Azure Subscription ID形式（GUID）
-		return s.generateUUID(), nil
-	default:
-		return fmt.Sprintf("account-%s-%d", accountName, time.Now().Unix()), nil
-	}
-}
-
-// generateAccessKey はプロバイダー別のアクセスキーを生成（ダミー値）
-func (s *cspService) generateAccessKey(provider model.CSPProvider) (string, error) {
-	switch provider {
-	case model.CSPProviderAWS:
-		return fmt.Sprintf("AKIA%s", s.generateRandomString(16)), nil
-	case model.CSPProviderGCP:
-		return fmt.Sprintf("gcp-access-%s", s.generateRandomString(20)), nil
-	case model.CSPProviderAzure:
-		return fmt.Sprintf("azure-access-%s", s.generateRandomString(20)), nil
-	default:
-		return s.generateRandomString(24), nil
-	}
-}
-
-// generateSecretKey はプロバイダー別のシークレットキーを生成（ダミー値）
-func (s *cspService) generateSecretKey(provider model.CSPProvider) (string, error) {
-	switch provider {
-	case model.CSPProviderAWS:
-		return s.generateRandomString(40), nil
-	case model.CSPProviderGCP, model.CSPProviderAzure:
-		return s.generateRandomString(32), nil
-	default:
-		return s.generateRandomString(32), nil
-	}
-}
-
-// getDefaultRegion はプロバイダー別のデフォルトリージョンを返す
-func (s *cspService) getDefaultRegion(provider model.CSPProvider) string {
-	switch provider {
-	case model.CSPProviderAWS:
-		return "ap-northeast-1"
-	case model.CSPProviderGCP:
-		return "asia-northeast1"
-	case model.CSPProviderAzure:
-		return "Japan East"
-	default:
-		return "default"
-	}
-}
-
-// generateRandomString はランダムな文字列を生成
-func (s *cspService) generateRandomString(length int) string {
-	bytes := make([]byte, length/2)
-	rand.Read(bytes)
-	return hex.EncodeToString(bytes)
-}
-
-// generateUUID は簡易UUIDを生成
-func (s *cspService) generateUUID() string {
-	bytes := make([]byte, 16)
-	rand.Read(bytes)
-	return fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16])
-}
-
-func (s *cspService) DeleteCSPRequest(id uint, userID uint) error {
-	// 既存の申請を取得
-	existingRequest, err := s.cspRepo.SelectCSPRequestByID(id)
-	if err != nil {
-		return err
-	}
-
-	// 申請者本人または管理者かチェック
-	if existingRequest.UserID != userID {
-		hasAccess, err := s.CanUserAccessCSPRequest(userID, id)
-		if err != nil {
-			return err
-		}
-		if !hasAccess {
-			return model.ErrInsufficientPermissions
-		}
-	}
-
-	return s.cspRepo.DeleteCSPRequest(id)
-}
-
 // CSPAccount related methods
 
 func (s *cspService) GetAllCSPAccounts() ([]model.CSPAccount, error) {
@@ -368,37 +47,13 @@ func (s *cspService) GetCSPAccountsByProvider(provider model.CSPProvider) ([]mod
 	return s.cspRepo.SelectCSPAccountsByProvider(provider)
 }
 
-func (s *cspService) GetCSPAccountByCSPRequestID(cspRequestID uint) (*model.CSPAccount, error) {
-	return s.cspRepo.SelectCSPAccountByCSPRequestID(cspRequestID)
-}
-
 func (s *cspService) CreateCSPAccount(adminID uint, req *model.CSPAccountCreateRequest) (*model.CSPAccount, error) {
 	// 管理者権限をチェック（簡易版）
 	// 実際の実装では適切な権限チェックを行う
 
-	// CSP申請の存在をチェック
-	cspRequest, err := s.cspRepo.SelectCSPRequestByID(req.CSPRequestID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 申請が承認済みかチェック
-	if cspRequest.Status != model.CSPRequestStatusApproved {
-		return nil, errors.New("CSP request must be approved first")
-	}
-
 	// プロバイダーの有効性をチェック
 	if !req.Provider.IsValid() {
 		return nil, model.ErrInvalidCSPProvider
-	}
-
-	// 既にCSPアカウントが作成されていないかチェック
-	_, err = s.cspRepo.SelectCSPAccountByCSPRequestID(req.CSPRequestID)
-	if err == nil {
-		return nil, errors.New("CSP account already exists for this request")
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
 	}
 
 	cspAccount := &model.CSPAccount{
@@ -409,11 +64,10 @@ func (s *cspService) CreateCSPAccount(adminID uint, req *model.CSPAccountCreateR
 		SecretKey:    req.SecretKey,
 		Region:       req.Region,
 		Status:       "active",
-		CSPRequestID: req.CSPRequestID,
 		CreatedBy:    adminID,
 	}
 
-	err = s.cspRepo.InsertCSPAccount(cspAccount)
+	err := s.cspRepo.InsertCSPAccount(cspAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -511,22 +165,6 @@ func (s *cspService) DeleteProjectCSPAccountByProjectAndCSPAccount(projectID, cs
 }
 
 // Permission checking methods
-
-func (s *cspService) CanUserAccessCSPRequest(userID, cspRequestID uint) (bool, error) {
-	// CSP申請を取得
-	cspRequest, err := s.cspRepo.SelectCSPRequestByID(cspRequestID)
-	if err != nil {
-		return false, err
-	}
-
-	// 申請者本人の場合はアクセス可能
-	if cspRequest.UserID == userID {
-		return true, nil
-	}
-
-	// プロジェクトへの管理権限があるかチェック
-	return s.CanUserManageProjectCSPAccount(userID, cspRequest.ProjectID)
-}
 
 func (s *cspService) CanUserManageCSPAccount(userID, cspAccountID uint) (bool, error) {
 	// 簡易版：管理者権限のチェック
@@ -740,4 +378,20 @@ func (s *cspService) DeleteCSPAccountMember(id uint, userID uint) error {
 	}
 
 	return s.cspRepo.DeleteCSPAccountMember(id)
+}
+
+// Helper methods
+
+// generateRandomString はランダムな文字列を生成
+func (s *cspService) generateRandomString(length int) string {
+	bytes := make([]byte, length/2)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+// generateUUID は簡易UUIDを生成
+func (s *cspService) generateUUID() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16])
 }

@@ -3,24 +3,11 @@ package interfaces
 import "go-nextjs-api/internal/model"
 
 type CSPRepository interface {
-	// CSPRequest related methods
-	SelectCSPRequestAll() ([]model.CSPRequest, error)
-	SelectCSPRequestWithPagination(page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error)
-	SelectCSPRequestByID(id uint) (*model.CSPRequest, error)
-	SelectCSPRequestsByProjectID(projectID uint) ([]model.CSPRequest, error)
-	SelectCSPRequestsByProjectIDWithPagination(projectID uint, page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error)
-	SelectCSPRequestsByUserID(userID uint) ([]model.CSPRequest, error)
-	SelectCSPRequestsByStatus(status model.CSPRequestStatus) ([]model.CSPRequest, error)
-	InsertCSPRequest(request *model.CSPRequest) error
-	UpdateCSPRequest(request *model.CSPRequest) error
-	DeleteCSPRequest(id uint) error
-
 	// CSPAccount related methods
 	SelectCSPAccountAll() ([]model.CSPAccount, error)
 	SelectCSPAccountWithPagination(page, limit int) ([]model.CSPAccount, *model.PaginationInfo, error)
 	SelectCSPAccountByID(id uint) (*model.CSPAccount, error)
 	SelectCSPAccountsByProvider(provider model.CSPProvider) ([]model.CSPAccount, error)
-	SelectCSPAccountByCSPRequestID(cspRequestID uint) (*model.CSPAccount, error)
 	InsertCSPAccount(account *model.CSPAccount) error
 	UpdateCSPAccount(account *model.CSPAccount) error
 	DeleteCSPAccount(id uint) error

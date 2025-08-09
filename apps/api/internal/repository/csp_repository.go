@@ -15,128 +15,11 @@ func NewCSPRepository(db *gorm.DB) interfaces.CSPRepository {
 	return &cspRepository{db: db}
 }
 
-// CSPRequest related methods
-
-func (r *cspRepository) SelectCSPRequestAll() ([]model.CSPRequest, error) {
-	var requests []model.CSPRequest
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").Find(&requests).Error
-	return requests, err
-}
-
-func (r *cspRepository) SelectCSPRequestWithPagination(page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error) {
-	offset := (page - 1) * limit
-
-	var requests []model.CSPRequest
-	if err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").
-		Limit(limit).Offset(offset).Order("created_at DESC").
-		Find(&requests).Error; err != nil {
-		return nil, nil, err
-	}
-
-	var total int64
-	if err := r.db.Model(&model.CSPRequest{}).Count(&total).Error; err != nil {
-		return nil, nil, err
-	}
-
-	totalPages := int((total + int64(limit) - 1) / int64(limit))
-	pagination := &model.PaginationInfo{
-		Page:       page,
-		Limit:      limit,
-		Total:      int(total),
-		TotalPages: totalPages,
-		HasNext:    page < totalPages,
-		HasPrev:    page > 1,
-	}
-
-	return requests, pagination, nil
-}
-
-func (r *cspRepository) SelectCSPRequestByID(id uint) (*model.CSPRequest, error) {
-	var request model.CSPRequest
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").First(&request, id).Error
-	if err != nil {
-		return nil, err
-	}
-	return &request, nil
-}
-
-func (r *cspRepository) SelectCSPRequestsByProjectID(projectID uint) ([]model.CSPRequest, error) {
-	var requests []model.CSPRequest
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").
-		Where("project_id = ?", projectID).Order("created_at DESC").Find(&requests).Error
-	return requests, err
-}
-
-func (r *cspRepository) SelectCSPRequestsByProjectIDWithPagination(projectID uint, page, limit int) ([]model.CSPRequest, *model.PaginationInfo, error) {
-	var requests []model.CSPRequest
-	var total int64
-
-	// 総件数を取得
-	if err := r.db.Model(&model.CSPRequest{}).
-		Where("project_id = ?", projectID).
-		Count(&total).Error; err != nil {
-		return nil, nil, err
-	}
-
-	// ページング情報を計算
-	offset := (page - 1) * limit
-	totalPages := int((total + int64(limit) - 1) / int64(limit))
-	
-	// データの取得
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").
-		Where("project_id = ?", projectID).
-		Order("created_at DESC").
-		Limit(limit).
-		Offset(offset).
-		Find(&requests).Error
-	
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pagination := &model.PaginationInfo{
-		Page:       page,
-		Limit:      limit,
-		Total:      int(total),
-		TotalPages: totalPages,
-		HasNext:    page < totalPages,
-		HasPrev:    page > 1,
-	}
-
-	return requests, pagination, nil
-}
-
-func (r *cspRepository) SelectCSPRequestsByUserID(userID uint) ([]model.CSPRequest, error) {
-	var requests []model.CSPRequest
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").
-		Where("user_id = ?", userID).Order("created_at DESC").Find(&requests).Error
-	return requests, err
-}
-
-func (r *cspRepository) SelectCSPRequestsByStatus(status model.CSPRequestStatus) ([]model.CSPRequest, error) {
-	var requests []model.CSPRequest
-	err := r.db.Preload("Project").Preload("User").Preload("ReviewedByUser").
-		Where("status = ?", status).Order("created_at DESC").Find(&requests).Error
-	return requests, err
-}
-
-func (r *cspRepository) InsertCSPRequest(request *model.CSPRequest) error {
-	return r.db.Create(request).Error
-}
-
-func (r *cspRepository) UpdateCSPRequest(request *model.CSPRequest) error {
-	return r.db.Save(request).Error
-}
-
-func (r *cspRepository) DeleteCSPRequest(id uint) error {
-	return r.db.Delete(&model.CSPRequest{}, id).Error
-}
-
 // CSPAccount related methods
 
 func (r *cspRepository) SelectCSPAccountAll() ([]model.CSPAccount, error) {
 	var accounts []model.CSPAccount
-	err := r.db.Preload("CSPRequest").Preload("CreatedByUser").Preload("ProjectCSPAccounts").
+	err := r.db.Preload("CreatedByUser").Preload("ProjectCSPAccounts").
 		Find(&accounts).Error
 	return accounts, err
 }
@@ -145,7 +28,7 @@ func (r *cspRepository) SelectCSPAccountWithPagination(page, limit int) ([]model
 	offset := (page - 1) * limit
 
 	var accounts []model.CSPAccount
-	if err := r.db.Preload("CSPRequest").Preload("CreatedByUser").
+	if err := r.db.Preload("CreatedByUser").
 		Limit(limit).Offset(offset).Order("created_at DESC").
 		Find(&accounts).Error; err != nil {
 		return nil, nil, err
@@ -171,7 +54,7 @@ func (r *cspRepository) SelectCSPAccountWithPagination(page, limit int) ([]model
 
 func (r *cspRepository) SelectCSPAccountByID(id uint) (*model.CSPAccount, error) {
 	var account model.CSPAccount
-	err := r.db.Preload("CSPRequest").Preload("CreatedByUser").Preload("ProjectCSPAccounts").
+	err := r.db.Preload("CreatedByUser").Preload("ProjectCSPAccounts").
 		First(&account, id).Error
 	if err != nil {
 		return nil, err
@@ -181,19 +64,9 @@ func (r *cspRepository) SelectCSPAccountByID(id uint) (*model.CSPAccount, error)
 
 func (r *cspRepository) SelectCSPAccountsByProvider(provider model.CSPProvider) ([]model.CSPAccount, error) {
 	var accounts []model.CSPAccount
-	err := r.db.Preload("CSPRequest").Preload("CreatedByUser").
+	err := r.db.Preload("CreatedByUser").
 		Where("provider = ?", provider).Order("created_at DESC").Find(&accounts).Error
 	return accounts, err
-}
-
-func (r *cspRepository) SelectCSPAccountByCSPRequestID(cspRequestID uint) (*model.CSPAccount, error) {
-	var account model.CSPAccount
-	err := r.db.Preload("CSPRequest").Preload("CreatedByUser").
-		Where("csp_request_id = ?", cspRequestID).First(&account).Error
-	if err != nil {
-		return nil, err
-	}
-	return &account, nil
 }
 
 func (r *cspRepository) InsertCSPAccount(account *model.CSPAccount) error {

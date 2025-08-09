@@ -1,25 +1,29 @@
-import { withAuth, sendApiResponse, sendError } from '../../lib/auth-middleware'
+import {
+  withCSPProvisioningAuth,
+  sendApiResponse,
+  sendError,
+} from '../../lib/auth-middleware'
 
-export default withAuth(async (req, res, apiCall) => {
+export default withCSPProvisioningAuth(async (req, res, apiCall) => {
   const { method, query } = req
   let endpoint = '/csp-requests'
 
   try {
-    
     // URLクエリパラメータがある場合は追加
     const queryString = new URLSearchParams()
     if (query.status) queryString.append('status', query.status as string)
-    if (query.project_id) queryString.append('project_id', query.project_id as string)
+    if (query.project_id)
+      queryString.append('project_id', query.project_id as string)
     if (query.user_id) queryString.append('user_id', query.user_id as string)
     if (query.page) queryString.append('page', query.page as string)
     if (query.limit) queryString.append('limit', query.limit as string)
-    
+
     if (queryString.toString()) {
       endpoint += `?${queryString.toString()}`
     }
 
     let response
-    
+
     switch (method) {
       case 'GET':
         response = await apiCall(endpoint)
@@ -27,7 +31,7 @@ export default withAuth(async (req, res, apiCall) => {
       case 'POST':
         response = await apiCall(endpoint, {
           method: 'POST',
-          body: JSON.stringify(req.body)
+          body: JSON.stringify(req.body),
         })
         break
       default:

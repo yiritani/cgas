@@ -28,14 +28,28 @@ func getJWTSecret() string {
 type JWTClaims struct {
 	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // GenerateJWT はJWTトークンを生成
 func GenerateJWT(user model.User) (string, error) {
+	// ユーザーのシステム管理者権限を確認
+	isAdmin, err := CheckSystemAdminPermission(user.ID)
+	if err != nil {
+		// 権限チェックに失敗した場合は通常ユーザーとして扱う
+		isAdmin = false
+	}
+
+	role := "user"
+	if isAdmin {
+		role = "admin"
+	}
+
 	claims := JWTClaims{
 		UserID: user.ID,
 		Email:  user.Email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -102,6 +116,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// ユーザー情報をコンテキストに設定
 		c.Set("user_id", claims.UserID)
 		c.Set("user_email", claims.Email)
+		c.Set("user_role", claims.Role)
 
 		c.Next()
 	}

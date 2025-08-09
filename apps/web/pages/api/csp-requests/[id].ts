@@ -1,6 +1,10 @@
-import { withAuth, sendApiResponse, sendError } from '../../../lib/auth-middleware'
+import {
+  withCSPProvisioningAuth,
+  sendApiResponse,
+  sendError,
+} from '../../../lib/auth-middleware'
 
-export default withAuth(async (req, res, apiCall) => {
+export default withCSPProvisioningAuth(async (req, res, apiCall) => {
   const { method, query } = req
   const { id } = query
 
@@ -19,12 +23,12 @@ export default withAuth(async (req, res, apiCall) => {
       case 'PUT':
         response = await apiCall(endpoint, {
           method: 'PUT',
-          body: JSON.stringify(req.body)
+          body: JSON.stringify(req.body),
         })
         break
       case 'DELETE':
         response = await apiCall(endpoint, {
-          method: 'DELETE'
+          method: 'DELETE',
         })
         break
       default:

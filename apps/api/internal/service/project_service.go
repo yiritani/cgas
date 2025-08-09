@@ -357,3 +357,12 @@ func (s *projectService) CheckAdminProjectPermission(userID uint, projectID uint
 
 	return adminProjectPermission, nil
 }
+
+// CanUserManageProject はユーザーがプロジェクトを管理できるかどうかを返す
+func (s *projectService) CanUserManageProject(userID, projectID uint) (bool, error) {
+	permission, err := s.CheckProjectPermission(userID, projectID)
+	if err != nil {
+		return false, err
+	}
+	return permission.CanManage, nil
+}

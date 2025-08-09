@@ -92,12 +92,6 @@ func main() {
 		}) // メンバーロール更新
 		protected.DELETE("/projects/:id/members/:memberId", app.ProjectHandler.RemoveProjectMember)  // メンバー削除
 		
-		// CSP Provisioning関連（認証必須）
-		protected.GET("/csp-requests", app.CSPHandler.GetCSPRequests)              // CSP Provisioning一覧
-		protected.GET("/csp-requests/:id", app.CSPHandler.GetCSPRequest)           // CSP Provisioning詳細
-		protected.POST("/csp-requests", app.CSPHandler.CreateCSPRequest)           // CSP Provisioning作成
-		protected.PUT("/csp-requests/:id", app.CSPHandler.UpdateCSPRequest)        // CSP Provisioning更新
-		protected.DELETE("/csp-requests/:id", app.CSPHandler.DeleteCSPRequest)     // CSP Provisioning削除
 		
 		// Project CSP Account関連（認証必須 - ユーザーは自分のプロジェクトのみアクセス可能）
 		protected.GET("/project-csp-accounts", app.CSPHandler.GetProjectCSPAccounts) // プロジェクトCSPアカウント関連一覧
@@ -109,6 +103,14 @@ func main() {
 		protected.PUT("/csp-account-members/:id", app.CSPHandler.UpdateCSPAccountMember) // CSPアカウントメンバー更新
 		protected.DELETE("/csp-account-members/:id", app.CSPHandler.DeleteCSPAccountMember) // CSPアカウントメンバー削除
 		
+		// 内部API（マイクロサービス間通信用）
+		internal := r.Group("/api/internal")
+		{
+			internal.GET("/projects/:id/can-manage", app.InternalHandler.CanManageProject)
+			internal.GET("/projects/:id/type", app.InternalHandler.GetProjectType)
+			internal.POST("/csp-accounts/auto-create", app.InternalHandler.AutoCreateCSPAccount)
+		}
+		
 		// システム管理者のみ
 		adminOnly := protected.Group("/admin")
 		adminOnly.Use(middleware.RequireRole("admin"))
@@ -116,8 +118,7 @@ func main() {
 			adminOnly.POST("/users", app.UserHandler.CreateUser)
 			adminOnly.DELETE("/users/:id", app.UserHandler.DeleteUser)
 			
-			// CSP Provisioning関連（管理者のみ）
-			adminOnly.PUT("/csp-requests/:id/review", app.CSPHandler.ReviewCSPRequest)        // CSP Provisioningレビュー（承認/却下）
+			// CSP Account関連（管理者のみ）
 			adminOnly.GET("/csp-accounts", app.CSPHandler.GetCSPAccounts)                     // CSPアカウント一覧
 			adminOnly.GET("/csp-accounts/:id", app.CSPHandler.GetCSPAccount)                  // CSPアカウント詳細
 			adminOnly.POST("/csp-accounts", app.CSPHandler.CreateCSPAccount)                  // CSPアカウント作成

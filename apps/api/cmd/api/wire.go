@@ -15,10 +15,11 @@ import (
 
 // ApplicationContainer はアプリケーションの依存関係をまとめる構造体
 type ApplicationContainer struct {
-	UserHandler    *handler.UserHandler
-	AuthHandler    *handler.AuthHandler
-	ProjectHandler *handler.ProjectHandler
-	CSPHandler     *handler.CSPHandler
+	UserHandler     *handler.UserHandler
+	AuthHandler     *handler.AuthHandler
+	ProjectHandler  *handler.ProjectHandler
+	CSPHandler      *handler.CSPHandler
+	InternalHandler *handler.InternalHandler
 }
 
 // initializeApplication はWireを使って依存関係を注入したApplicationContainerを作成
@@ -40,6 +41,7 @@ func initializeApplication(db *gorm.DB) (*ApplicationContainer, error) {
 		handler.NewAuthHandler,
 		handler.NewProjectHandler,
 		handler.NewCSPHandler,
+		handler.NewInternalHandler,
 		
 		// ApplicationContainerの構築
 		wire.Struct(new(ApplicationContainer), "*"),

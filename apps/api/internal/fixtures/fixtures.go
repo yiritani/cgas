@@ -80,11 +80,11 @@ func (f *Fixtures) DropAllTables() error {
 
 	// 外部キー制約を考慮してテーブルを削除（逆順）
 	tables := []interface{}{
-		// CSP関連テーブル（依存関係の順番で削除）
+		// CSP関連テーブル（依存関係の順番で削除、但しCSP Requestは除外）
 		&model.CSPAccountMember{}, // CSPアカウントメンバー
 		&model.ProjectCSPAccount{}, // プロジェクトCSPアカウント関連
 		&model.CSPAccount{},        // CSPアカウント
-		&model.CSPRequest{},        // CSPリクエスト
+
 		
 		// 基本テーブル
 		&model.UserProjectRole{}, // ユーザープロジェクトロール

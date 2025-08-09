@@ -20,7 +20,7 @@ func RunMigrations() error {
 		&model.Organization{},     // 組織テーブル（プロジェクトの前に作成）
 		&model.Project{},
 		&model.UserProjectRole{},
-		&model.CSPRequest{},       // CSP申請テーブル
+
 		&model.CSPAccount{},       // CSPアカウントテーブル
 		&model.ProjectCSPAccount{}, // プロジェクトCSPアカウント関連テーブル
 		&model.CSPAccountMember{}, // CSPアカウントメンバーテーブル
@@ -29,7 +29,7 @@ func RunMigrations() error {
 		log.Printf("Failed to create new tables: %v", err)
 		return err
 	}
-	log.Println("✅ New tables (organizations, projects, user_project_roles, csp_requests, csp_accounts, project_csp_accounts, csp_account_members) created successfully")
+	log.Println("✅ New tables (organizations, projects, user_project_roles, csp_accounts, project_csp_accounts, csp_account_members, project_vendor_relations) created successfully")
 
 	// 2. Userテーブルからroleカラムを削除する前に、既存データを移行
 	fixturesManager := fixtures.NewFixtures(DB)

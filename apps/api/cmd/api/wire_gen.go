@@ -29,11 +29,13 @@ func initializeApplication(db *gorm.DB) (*ApplicationContainer, error) {
 	cspRepository := repository.NewCSPRepository(db)
 	cspService := service.NewCSPService(cspRepository, projectRepository, userRepository)
 	cspHandler := handler.NewCSPHandler(cspService)
+	internalHandler := handler.NewInternalHandler(projectService, cspService)
 	applicationContainer := &ApplicationContainer{
-		UserHandler:    userHandler,
-		AuthHandler:    authHandler,
-		ProjectHandler: projectHandler,
-		CSPHandler:     cspHandler,
+		UserHandler:     userHandler,
+		AuthHandler:     authHandler,
+		ProjectHandler:  projectHandler,
+		CSPHandler:      cspHandler,
+		InternalHandler: internalHandler,
 	}
 	return applicationContainer, nil
 }
@@ -42,10 +44,11 @@ func initializeApplication(db *gorm.DB) (*ApplicationContainer, error) {
 
 // ApplicationContainer はアプリケーションの依存関係をまとめる構造体
 type ApplicationContainer struct {
-	UserHandler    *handler.UserHandler
-	AuthHandler    *handler.AuthHandler
-	ProjectHandler *handler.ProjectHandler
-	CSPHandler     *handler.CSPHandler
+	UserHandler     *handler.UserHandler
+	AuthHandler     *handler.AuthHandler
+	ProjectHandler  *handler.ProjectHandler
+	CSPHandler      *handler.CSPHandler
+	InternalHandler *handler.InternalHandler
 }
 
 // DatabaseProvider はデータベースインスタンスを提供

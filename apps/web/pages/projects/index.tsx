@@ -55,7 +55,7 @@ export default function ProjectsIndex() {
   return (
     <>
       <Head>
-        <title>プロジェクト一覧 - Go + Next.js モノレポ</title>
+        <title>プロジェクト一覧</title>
         <meta name="description" content="参加しているプロジェクトの一覧" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
