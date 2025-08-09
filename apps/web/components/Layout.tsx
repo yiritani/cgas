@@ -24,7 +24,6 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: 'ホーム', href: '/' },
     { name: 'プロジェクト一覧', href: '/projects' },
-    { name: '🌸 Sakura UI', href: '/sakura-test' },
   ]
 
   return (
@@ -41,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
                 <span className="material-symbols-outlined inline-block mr-2 text-2xl align-middle">
                   rocket_launch
                 </span>
-                Go + Next.js モノレポ
+                CGAS
               </Link>
 
               {user && (

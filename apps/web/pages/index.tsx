@@ -180,18 +180,6 @@ export default function Home() {
                   </Card>
                 </Link>
 
-                <Link href="/sakura-test">
-                  <Card className="text-center p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                    <span className="material-symbols-outlined text-pink-600 text-4xl mb-4 block">
-                      palette
-                    </span>
-                    <div className="text-lg font-semibold mb-2">
-                      UI コンポーネント
-                    </div>
-                    <p className="text-gray-600 text-sm">Sakura UIのデモ</p>
-                  </Card>
-                </Link>
-
                 <Card className="text-center p-6">
                   <span className="material-symbols-outlined text-gray-400 text-4xl mb-4 block">
                     more_horiz
