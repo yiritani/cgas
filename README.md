@@ -1,21 +1,42 @@
-# Go + Next.js モノレポ
+# Cloud Governance & Automation System (CGAS)
 
-TurboRepo、Go (GORM)、Next.js (TypeScript, Page Router) を使用したモノレポ構成です。Docker Compose watch機能とホットリロードに対応しています。
+マイクロサービス・マイクロフロントエンド アーキテクチャを採用したクラウドガバナンス・自動化システムです。
+TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロード開発に対応しています。
+
+## アーキテクチャ概要
+
+### マイクロサービス構成
+
+- **Main API** (Port 8080): ユーザー管理、プロジェクト管理、CSPアカウント管理
+- **CSP Provisioning Service** (Port 8081): CSP申請・承認ワークフロー
+- **PostgreSQL** (Port 5432): Main API用データベース
+- **CSP Provisioning DB** (Port 5433): CSP Provisioning Service用データベース
+
+### マイクロフロントエンド構成
+
+- **Web App** (Port 3000): メインユーザー向けアプリケーション
+- **Web Admin** (Port 3001): 管理者向けアプリケーション
+- **CSP Provisioning Frontend** (Port 3002): CSP申請専用フロントエンド _(開発中)_
 
 ## 技術スタック
 
 ### フロントエンド
-- **Next.js 14** (Page Router)
-- **TypeScript**  
-- **React 18**
 
-### バックエンド  
+- **Next.js 14** (Page Router)
+- **TypeScript**
+- **React 18**
+- **Tailwind CSS** + **Sakura UI**
+
+### バックエンド
+
 - **Go 1.21**
 - **Gin** (Webフレームワーク)
 - **GORM** (ORM)
+- **Wire** (依存性注入)
 - **PostgreSQL 16**
 
-### 開発環境
+### 開発・運用
+
 - **TurboRepo** (モノレポ管理)
 - **Docker & Docker Compose** (watch機能付き)
 - **Air** (Goホットリロード)
@@ -23,21 +44,24 @@ TurboRepo、Go (GORM)、Next.js (TypeScript, Page Router) を使用したモノ�
 ## プロジェクト構成
 
 ```
-go_startup/
+cgas/
 ├── apps/
-│   ├── web/           # Next.js アプリケーション
-│   └── api/           # Go API サーバー
-├── packages/          # 共通パッケージ (将来の拡張用)
-├── docker-compose.yml      # 本番用
-├── docker-compose.dev.yml  # 開発用 (watch対応)
-├── package.json       # ルートパッケージ
-└── turbo.json         # TurboRepo設定
+│   ├── web/                          # メインWebアプリ (Port 3000)
+│   ├── web_admin/                    # 管理者Webアプリ (Port 3001)
+│   ├── csp-provisioning-frontend/   # CSP申請専用フロントエンド (Port 3002) *開発中*
+│   ├── api/                         # メインAPIサーバー (Port 8080)
+│   └── csp-provisioning-service/    # CSP申請サービス (Port 8081)
+├── docker-compose.yml               # 本番用
+├── docker-compose.dev.yml           # 開発用 (watch対応)
+├── package.json                     # ルートパッケージ
+└── turbo.json                       # TurboRepo設定
 ```
 
 ## 開発環境のセットアップ
 
 ### 必要な環境
-- Node.js 20+
+
+- Node.js 22+
 - Go 1.21+
 - Docker & Docker Compose
 
@@ -62,111 +86,116 @@ npm run docker:dev
 docker compose -f docker-compose.dev.yml up --watch
 ```
 
-これにより以下が起動します：
-- Next.js: http://localhost:3000 (ホットリロード対応)
-- Go API: http://localhost:8080 (Airによるホットリロード)
-- PostgreSQL: localhost:5432
+## サービス詳細
 
-### 3. ローカル開発 (Docker なし)
+### Main API (Port 8080)
 
-```bash
-# 全アプリケーションを同時起動
-npm run dev
+- **責任**: ユーザー管理、プロジェクト管理、CSPアカウント管理、内部API
+- **データベース**: PostgreSQL (Port 5432)
+- **主要機能**:
+  - JWT認証・認可
+  - ユーザー・プロジェクト CRUD
+  - CSPアカウント・メンバー管理
+  - 内部サービス間通信API
 
-# または個別に起動
-cd apps/web && npm run dev    # http://localhost:3000
-cd apps/api && go run main.go # http://localhost:8080
+### CSP Provisioning Service (Port 8081)
+
+- **責任**: CSP申請・承認ワークフロー
+- **データベース**: PostgreSQL (Port 5433)
+- **主要機能**:
+  - CSP申請の作成・更新・削除
+  - 管理者による承認・却下処理
+  - プロジェクト権限チェック（Main API連携）
+
+### BFF (Backend for Frontend)
+
+- **実装**: Next.js API Routes
+- **責任**: フロントエンド向けAPI統合、認証プロキシ
+- **主要機能**:
+  - 複数マイクロサービスへのリクエスト統合
+  - Cookie-based認証管理
+  - CSP申請承認時の自動CSPアカウント作成
+
+## データベース構成
+
+### Main API Database (Port 5432)
+
+- **Database**: go_nextjs_db
+- **Tables**: users, projects, user_project_roles, csp_accounts, project_csp_accounts, csp_account_members
+
+### CSP Provisioning Database (Port 5433)
+
+- **Database**: csp_provisioning_db
+- **Tables**: csp_requests
+
+### 共通接続情報
+
+- **User**: postgres
+- **Password**: password
+- **Host**: localhost (Docker内では各サービス名)
+
+## 開発ワークフロー
+
+### CSP申請・承認フロー（新アーキテクチャ）
+
+1. **申請作成**: Web App → CSP Provisioning Service
+2. **申請一覧**: Web Admin → CSP Provisioning Service
+3. **申請承認**: Web Admin → BFF → CSP Provisioning Service (承認) + Main API (CSPアカウント作成)
+
+### BFFによる統合処理
+
+```
+承認リクエスト → BFF
+├── Step 1: CSP Provisioning Service で承認処理
+└── Step 2: 承認成功時、Main API でCSPアカウント自動作成
 ```
 
 ## API エンドポイント
 
-### ユーザー管理
-- `GET /api/users` - 全ユーザー取得
-- `GET /api/users/:id` - 指定ユーザー取得  
-- `POST /api/users` - ユーザー作成
-- `PUT /api/users/:id` - ユーザー更新
-- `DELETE /api/users/:id` - ユーザー削除
+### Main API (8080)
 
-### ヘルスチェック
-- `GET /health` - サーバー状態確認
-
-## Docker Compose Watch機能
-
-開発環境では以下のファイル変更が自動的に反映されます：
-
-### Next.js (web)
-- `pages/` - 同期
-- `styles/` - 同期  
-- `public/` - 同期
-- `package.json` - 再ビルド
-
-### Go API (api)
-- `.go` ファイル - 再起動
-- `go.mod`, `go.sum` - 再ビルド
-
-## 利用可能なコマンド
-
-```bash
-# 開発
-npm run dev                    # 全アプリケーション開発サーバー起動
-npm run docker:dev             # Docker Compose watch で開発
-
-# ビルド
-npm run build                  # 全アプリケーションビルド
-npm run docker:build           # Dockerイメージビルド
-
-# 本番
-npm run docker:up              # 本番用Docker起動
-npm run docker:down            # Docker停止
-
-# その他
-npm run lint                   # リント実行
-npm run format                 # コードフォーマット
-npm run clean                  # ビルド成果物削除
+```
+GET    /api/users              # ユーザー一覧
+GET    /api/projects           # プロジェクト一覧
+GET    /api/csp-accounts       # CSPアカウント一覧
+POST   /api/internal/csp-accounts/auto-create  # CSPアカウント自動作成（内部API）
 ```
 
-## 環境変数
+### CSP Provisioning Service (8081)
 
-### Go API (`apps/api/.env`)
-```bash
-PORT=8080
-DB_TYPE=postgres
-DATABASE_URL=postgres://postgres:password@localhost:5432/go_nextjs_db?sslmode=disable
-GIN_MODE=debug
+```
+GET    /api/csp-requests       # CSP申請一覧
+POST   /api/csp-requests       # CSP申請作成
+PUT    /api/csp-requests/:id/review  # CSP申請承認・却下（管理者のみ）
 ```
 
-### Next.js
-```bash
-API_URL=http://localhost:8080  # APIサーバーURL
+### フロントエンドアプリ
+
 ```
-
-## データベース
-
-PostgreSQL 16を使用します。初回起動時に：
-1. テーブルが自動作成されます（GORM Auto Migration）
-2. サンプルユーザーデータが投入されます
-
-データベース接続情報：
-- Host: localhost (Docker使用時は`db`)
-- Port: 5432
-- Database: go_nextjs_db
-- User: postgres
-- Password: password
+http://localhost:3000  # Web App (メインユーザー向け)
+http://localhost:3001  # Web Admin (管理者向け)
+http://localhost:3002  # CSP Provisioning Frontend (開発中)
+```
 
 ## トラブルシューティング
 
-### Docker Compose Watchが動作しない
-- Docker Desktop最新版を使用してください
-- `docker compose version` でv2.22+であることを確認
+### Docker Compose
 
-### ホットリロードが効かない
-- ファイルが正しいディレクトリにあるか確認
-- Dockerボリュームマウントが正しく設定されているか確認
+```bash
+# 全サービス再起動
+docker compose -f docker-compose.dev.yml restart
 
-### Goアプリケーションが起動しない
-- `go mod tidy` を実行
-- ポート8080が使用されていないか確認
+# 特定サービスのログ確認
+docker compose -f docker-compose.dev.yml logs -f api
+docker compose -f docker-compose.dev.yml logs -f csp-provisioning
 
-## ライセンス
+# データベースリセット
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+```
 
-MIT
+### 開発時の注意点
+
+- 環境変数の変更後は該当コンテナの再作成が必要
+- データベースマイグレーションは各サービス起動時に自動実行
+- JWT認証はMain APIで一元管理し、他サービスで検証
