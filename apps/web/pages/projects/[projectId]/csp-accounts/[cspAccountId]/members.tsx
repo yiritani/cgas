@@ -633,15 +633,23 @@ export default function CSPAccountMembers() {
           </Card>
         )}
         {success && (
-          <Card className="mb-6 bg-green-50 border-l-4 border-l-green-500 border-green-200 shadow-md">
-            <div className="flex items-start p-4">
-              <div className="bg-green-100 rounded-full p-2 mr-3 flex-shrink-0">
+          <Card className="mb-4 bg-green-50 border-l-4 border-l-green-500 border-green-200 shadow-md cursor-pointer hover:bg-green-100 transition-colors">
+            <div
+              className="flex items-center p-3"
+              onClick={() => setSuccess('')}
+            >
+              <div className="bg-green-100 rounded-full p-1.5 mr-3 flex-shrink-0">
                 <span className="material-symbols-outlined text-green-600 text-sm">
                   check_circle
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-green-800 text-sm">{success}</p>
+              </div>
+              <div className="flex-shrink-0 ml-2">
+                <span className="material-symbols-outlined text-green-600 text-sm hover:text-green-800">
+                  close
+                </span>
               </div>
             </div>
           </Card>
