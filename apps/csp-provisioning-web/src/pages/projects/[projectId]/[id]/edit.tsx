@@ -203,15 +203,15 @@ const EditCSPProvisioningPage = () => {
           </div>
 
           {/* 編集権限の警告 */}
-          <Card className="bg-orange-50 border-l-4 border-l-orange-500 border-orange-200">
-            <div className="flex items-start p-4">
-              <div className="bg-orange-100 rounded-full p-2 mr-3 flex-shrink-0">
-                <span className="material-symbols-outlined text-orange-600 text-sm">
+          <Card className="bg-orange-50 border-l-4 border-l-orange-500 border-orange-200 rounded-lg">
+            <div className="flex items-center p-3">
+              <div className="bg-orange-100 rounded-full flex-shrink-0">
+                <span className="material-symbols-outlined text-orange-600 text-sm leading-none">
                   info
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-orange-800 text-sm">
+                <p className="text-orange-800 text-sm leading-none">
                   承認待ちの申請のみ編集できます。承認または却下された申請は編集できません。
                 </p>
               </div>

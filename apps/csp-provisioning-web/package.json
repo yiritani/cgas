@@ -10,10 +10,14 @@
   },
   "dependencies": {
     "@sakura-ui/core": "^0.3.4",
+    "@sakura-ui/forms": "^0.2.2",
+    "@sakura-ui/markdown": "^0.0.17",
+    "@sakura-ui/tailwind-theme-plugin": "^0.2.2",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "swr": "^2.3.5"
+    "swr": "^2.3.5",
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -23,7 +27,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }

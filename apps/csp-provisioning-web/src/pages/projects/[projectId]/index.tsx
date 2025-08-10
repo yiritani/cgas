@@ -156,7 +156,7 @@ const CSPProvisioningPage = () => {
 
           {/* エラー表示 */}
           {error && (
-            <Card className="bg-red-50 border-l-4 border-l-red-500 border-red-200">
+            <Card className="bg-red-50 border-l-4 border-l-red-500 border-red-200 rounded-lg">
               <div className="flex items-start p-4">
                 <div className="bg-red-100 rounded-full p-2 mr-3 flex-shrink-0">
                   <span className="material-symbols-outlined text-red-600 text-sm">
@@ -185,24 +185,29 @@ const CSPProvisioningPage = () => {
 
           {/* 申請一覧 */}
           {cspRequests.length === 0 && !error ? (
-            <Card className="text-center p-8">
-              <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
-                cloud_off
-              </span>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                申請がありません
-              </h3>
-              <p className="text-gray-600 mb-4">
-                まだCSPプロビジョニング申請が作成されていません。
-              </p>
-              <Link href={`/projects/${projectId}/new`}>
-                <Button>
-                  <span className="material-symbols-outlined mr-2 text-sm">
-                    add
-                  </span>
-                  最初の申請を作成
-                </Button>
-              </Link>
+            <Card
+              className="text-center rounded-lg flex items-center justify-center"
+              style={{ minHeight: '300px' }}
+            >
+              <div>
+                <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
+                  cloud_off
+                </span>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  申請がありません
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  まだCSPプロビジョニング申請が作成されていません。
+                </p>
+                <Link href={`/projects/${projectId}/new`}>
+                  <Button>
+                    <span className="material-symbols-outlined mr-2 text-sm">
+                      add
+                    </span>
+                    最初の申請を作成
+                  </Button>
+                </Link>
+              </div>
             </Card>
           ) : (
             <div className="space-y-4">

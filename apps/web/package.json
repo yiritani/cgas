@@ -10,7 +10,7 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@sakura-ui/core": "^0.3.1",
+    "@sakura-ui/core": "^0.3.4",
     "@sakura-ui/forms": "^0.2.2",
     "@sakura-ui/markdown": "^0.0.17",
     "@sakura-ui/tailwind-theme-plugin": "^0.2.2",

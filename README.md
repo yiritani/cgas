@@ -15,8 +15,15 @@ TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロー�
 ### マイクロフロントエンド構成
 
 - **Web App** (Port 3000): メインユーザー向けアプリケーション
-- **Web Admin** (Port 3001): 管理者向けアプリケーション
-- **CSP Provisioning Frontend** (Port 3002): CSP申請専用フロントエンド _(開発中)_
+  - プロジェクト管理、CSPアカウント管理
+  - CSP Provisioning Webへの認証付き遷移機能
+- **CSP Provisioning Web** (Port 3001): CSP申請専用マイクロフロントエンド
+  - 独立したNext.js Page Routerアプリケーション
+  - JWT認証によるセキュアなアクセス制御
+  - メインアプリとの統一されたデザインシステム
+  - returnURL機能による元ページへの自動復帰
+- **Web Admin** (Port 3010): 管理者向けアプリケーション
+  - CSP申請の承認・却下機能
 
 ## 技術スタック
 
@@ -24,8 +31,11 @@ TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロー�
 
 - **Next.js 14** (Page Router)
 - **TypeScript**
-- **React 18**
+- **React 19** (CSP Provisioning Web)
+- **React 18** (Web App, Web Admin)
 - **Tailwind CSS** + **Sakura UI**
+- **useSWR** (リアルタイムデータフェッチング)
+- **マイクロフロントエンドアーキテクチャ**
 
 ### バックエンド
 
@@ -48,9 +58,9 @@ TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロー�
 ```
 cgas/
 ├── apps/
-│   ├── web/                          # メインWebアプリ (Port 3000)
-│   ├── web_admin/                    # 管理者Webアプリ (Port 3001)
-│   ├── csp-provisioning-frontend/   # CSP申請専用フロントエンド (Port 3002) *開発中*
+│   ├── web/                         # メインWebアプリ (Port 3000)
+│   ├── csp-provisioning-web/        # CSP申請専用マイクロフロントエンド (Port 3001)
+│   ├── web_admin/                   # 管理者Webアプリ (Port 3010)
 │   ├── api/                         # メインAPIサーバー (Port 8080)
 │   └── csp-provisioning-service/    # CSP申請サービス (Port 8081)
 ├── docker-compose.yml               # 本番用
@@ -156,10 +166,21 @@ docker compose -f docker-compose.dev.yml up --watch
 
 ## 開発ワークフロー
 
+### マイクロフロントエンド間連携
+
+1. **認証付き遷移**: Web App → CSP Provisioning Web
+   - JWTトークンをURLパラメータで安全に受け渡し
+   - returnURL機能による元ページへの自動復帰
+   - 元タブの自動クローズによるUX向上
+
+2. **統一デザインシステム**:
+   - Sakura UIによる一貫したコンポーネント設計
+   - Tailwind CSSによる統一されたスタイリング
+
 ### CSP申請・承認フロー（Firestoreベース）
 
-1. **申請作成**: Web App → CSP Provisioning Service → **Firestore**
-2. **申請一覧**: Web Admin → CSP Provisioning Service → **Firestore** (リアルタイム更新)
+1. **申請作成**: CSP Provisioning Web → CSP Provisioning Service → **Firestore**
+2. **申請一覧**: CSP Provisioning Web → CSP Provisioning Service → **Firestore** (リアルタイム更新)
 3. **申請承認**: Web Admin → CSP Provisioning Service → **Firestore** (承認) + Main API (CSPアカウント作成)
 
 ### Firestore統合処理
@@ -203,8 +224,8 @@ DELETE /api/csp-requests/:id               # CSP申請削除 (Firestore)
 
 ```
 http://localhost:3000  # Web App (メインユーザー向け)
-http://localhost:3001  # Web Admin (管理者向け)
-http://localhost:3002  # CSP Provisioning Frontend (開発中)
+http://localhost:3001  # CSP Provisioning Web (CSP申請専用マイクロフロントエンド)
+http://localhost:3010  # Web Admin (管理者向け)
 ```
 
 ## トラブルシューティング

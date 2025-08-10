@@ -38,7 +38,7 @@ const Layout = ({ children, title = 'CSP Provisioning' }: LayoutProps) => {
                   <span className="material-symbols-outlined inline-block mr-2 text-2xl align-middle">
                     cloud
                   </span>
-                  CSP Provisioning
+                  CGAS Provisioning
                 </Link>
               </div>
 
@@ -54,7 +54,7 @@ const Layout = ({ children, title = 'CSP Provisioning' }: LayoutProps) => {
                   onClick={goBack}
                   className="bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center px-3 py-2"
                 >
-                  <span className="material-symbols-outlined mr-2 text-sm leading-none">
+                  <span className="material-symbols-outlined mr-1 text-sm leading-none">
                     home
                   </span>
                   <span className="leading-none">メインアプリに戻る</span>

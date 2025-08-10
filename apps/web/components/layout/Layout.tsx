@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
                 <span className="material-symbols-outlined inline-block mr-2 text-2xl align-middle">
                   rocket_launch
                 </span>
-                CGAS
+                CGAS Directory
               </Link>
 
               {user && (
@@ -72,8 +72,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Button
                   onClick={logout}
                   variant="secondary"
-                  size="small"
-                  className="bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
+                  className="bg-opacity-20 hover:bg-opacity-30 py-1 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined mr-1 text-sm">
                     logout
