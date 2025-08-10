@@ -1,0 +1,13 @@
+{
+  "name": "csp-provisioning-service",
+  "version": "1.0.0",
+  "description": "CSP Provisioning Service with Firestore",
+  "scripts": {
+    "emulator:start": "firebase emulators:start --only firestore --project cgas-dev",
+    "emulator:export": "firebase emulators:export ./firestore-data",
+    "emulator:import": "firebase emulators:start --only firestore --import ./firestore-data --project cgas-dev"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  }
+}

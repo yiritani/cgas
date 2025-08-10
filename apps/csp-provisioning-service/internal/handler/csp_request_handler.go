@@ -47,7 +47,7 @@ func (h *CSPRequestHandler) GetCSPRequests(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status parameter"})
 			return
 		}
-		requests, err = h.service.GetByStatus(requestStatus)
+		requests, err = h.service.GetByStatus(c.Request.Context(), requestStatus)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -58,25 +58,20 @@ func (h *CSPRequestHandler) GetCSPRequests(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project_id parameter"})
 			return
 		}
-		requests, pagination, err = h.service.GetByProjectIDWithPagination(uint(projectID), page, limit)
+		requests, pagination, err = h.service.GetByProjectIDWithPagination(c.Request.Context(), projectID, page, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	} else if userIDStr != "" {
-		userID, err := strconv.Atoi(userIDStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id parameter"})
-			return
-		}
-		requests, err = h.service.GetByUserID(uint(userID))
+		requests, err = h.service.GetByRequestedBy(c.Request.Context(), userIDStr)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	} else {
 		// 通常のページング
-		requests, pagination, err = h.service.GetWithPagination(page, limit)
+		requests, pagination, err = h.service.GetWithPagination(c.Request.Context(), page, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -94,13 +89,12 @@ func (h *CSPRequestHandler) GetCSPRequests(c *gin.Context) {
 // GetCSPRequest はCSP Provisioning詳細を取得
 func (h *CSPRequestHandler) GetCSPRequest(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if idStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	request, err := h.service.GetByID(uint(id))
+	request, err := h.service.GetByID(c.Request.Context(), idStr)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "CSP provisioning not found"})
 		return
@@ -124,7 +118,7 @@ func (h *CSPRequestHandler) CreateCSPRequest(c *gin.Context) {
 		return
 	}
 
-	request, err := h.service.Create(userID.(uint), &req)
+	request, err := h.service.Create(c.Request.Context(), userID.(string), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -136,8 +130,7 @@ func (h *CSPRequestHandler) CreateCSPRequest(c *gin.Context) {
 // UpdateCSPRequest はCSP Provisioningを更新
 func (h *CSPRequestHandler) UpdateCSPRequest(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if idStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
@@ -155,7 +148,7 @@ func (h *CSPRequestHandler) UpdateCSPRequest(c *gin.Context) {
 		return
 	}
 
-	request, err := h.service.Update(uint(id), userID.(uint), &req)
+	request, err := h.service.Update(c.Request.Context(), idStr, userID.(string), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -167,8 +160,7 @@ func (h *CSPRequestHandler) UpdateCSPRequest(c *gin.Context) {
 // ReviewCSPRequest はCSP Provisioningをレビュー（承認/却下）
 func (h *CSPRequestHandler) ReviewCSPRequest(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if idStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
@@ -186,7 +178,7 @@ func (h *CSPRequestHandler) ReviewCSPRequest(c *gin.Context) {
 		return
 	}
 
-	request, err := h.service.Review(uint(id), reviewerID.(uint), &req)
+	request, err := h.service.Review(c.Request.Context(), idStr, reviewerID.(string), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -198,8 +190,7 @@ func (h *CSPRequestHandler) ReviewCSPRequest(c *gin.Context) {
 // DeleteCSPRequest はCSP Provisioningを削除
 func (h *CSPRequestHandler) DeleteCSPRequest(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if idStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
@@ -211,7 +202,7 @@ func (h *CSPRequestHandler) DeleteCSPRequest(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Delete(uint(id), userID.(uint))
+	err := h.service.Delete(c.Request.Context(), idStr, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -22,9 +22,10 @@ func main() {
 
 	// データベース初期化
 	database.InitDB()
+	defer database.CloseDB()
 
 	// 依存性注入
-	cspRequestRepo := repository.NewCSPRequestRepository(database.DB)
+	cspRequestRepo := repository.NewCSPRequestRepository(database.FirestoreClient)
 	cspRequestService := service.NewCSPRequestService(cspRequestRepo)
 	cspRequestHandler := handler.NewCSPRequestHandler(cspRequestService)
 

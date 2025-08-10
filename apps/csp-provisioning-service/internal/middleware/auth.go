@@ -65,8 +65,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
-			// ユーザー情報をコンテキストに設定
-			c.Set("user_id", claims.UserID)
+			// ユーザー情報をコンテキストに設定（user_idにはEmailを設定）
+			c.Set("user_id", claims.Email)
 			c.Set("user_email", claims.Email)
 			c.Set("user_role", claims.Role)
 			c.Next()

@@ -95,14 +95,15 @@ services:
       - '8081:8081'
     environment:
       - GIN_MODE=debug
-      - DATABASE_URL=postgres://postgres:password@csp-provisioning-db:5432/csp_provisioning_db?sslmode=disable
+      - FIREBASE_PROJECT_ID=cgas-dev
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:8082
       - PORT=8081
       - JWT_SECRET=your-secret-key-change-this-in-production
       - MAIN_API_URL=http://api:8080
     volumes:
       - ./apps/csp-provisioning-service:/app
     depends_on:
-      - csp-provisioning-db
+      - firestore-emulator
     develop:
       watch:
         - action: rebuild
@@ -112,6 +113,23 @@ services:
         - action: sync+restart
           path: ./apps/csp-provisioning-service
           target: /app
+
+  firestore-emulator:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - '8082:8082' # Firestore emulator
+      - '4000:4000' # Firebase UI
+    environment:
+      - FIREBASE_PROJECT_ID=cgas-dev
+    volumes:
+      - ./apps/csp-provisioning-service:/app
+    command: >
+      sh -c "
+        apk add --no-cache openjdk11-jre &&
+        npm install -g firebase-tools@13.15.0 &&
+        firebase emulators:start --only firestore --project cgas-dev
+      "
 
   db:
     image: postgres:16
@@ -127,20 +145,5 @@ services:
     # tmpfs:
     #   - /var/lib/postgresql/data
 
-  csp-provisioning-db:
-    image: postgres:16
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=csp_provisioning_db
-    ports:
-      - '5433:5432'
-    volumes:
-      - csp_provisioning_data_dev:/var/lib/postgresql/data
-    # 開発用：データ永続化を無効にする場合
-    # tmpfs:
-    #   - /var/lib/postgresql/data
-
 volumes:
   postgres_data_dev:
-  csp_provisioning_data_dev:

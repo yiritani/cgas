@@ -56,12 +56,13 @@ services:
       - '8081:8081'
     environment:
       - GIN_MODE=release
-      - DATABASE_URL=${CSP_PROVISIONING_DATABASE_URL:-postgres://postgres:password@csp-provisioning-db:5432/csp_provisioning_db?sslmode=disable}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-cgas-prod}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/firebase-service-account.json
       - PORT=8081
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-this-in-production}
       - MAIN_API_URL=http://api:8080
-    depends_on:
-      - csp-provisioning-db
+    volumes:
+      - ${FIREBASE_CREDENTIALS_PATH:-./firebase-credentials}:/app/credentials:ro
     restart: unless-stopped
 
   db:
@@ -76,18 +77,5 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  csp-provisioning-db:
-    image: postgres:16
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - POSTGRES_DB=${CSP_PROVISIONING_DB:-csp_provisioning_db}
-    ports:
-      - '5433:5432'
-    volumes:
-      - csp_provisioning_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-  csp_provisioning_data:

@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // CSP Requests collection
+    match /csp_requests/{document=**} {
+      // エミュレーター環境では全てのアクセスを許可
+      allow read, write: if true;
+    }
+  }
+}
