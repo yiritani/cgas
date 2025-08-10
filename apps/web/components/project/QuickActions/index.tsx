@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
+import { useAuth } from '../../../contexts/AuthContext'
 
 interface QuickActionsProps {
   projectId: string | string[] | undefined
@@ -12,6 +13,57 @@ export default function QuickActions({
 }: QuickActionsProps) {
   console.log('projectType', projectType)
   const isVendorProject = projectType === 'vendor'
+  const { authFetch } = useAuth()
+
+  // CSPアプリへのリダイレクト関数
+  const redirectToCSPApp = async (path: string) => {
+    try {
+      // APIからJWTトークンを取得
+      const tokenResponse = await authFetch('/api/auth/token')
+      if (tokenResponse.ok) {
+        const { token } = await tokenResponse.json()
+        if (token) {
+          // 現在のURLをreturnUrlとして追加
+          const returnUrl = encodeURIComponent(window.location.href)
+          const url = `http://localhost:3001${path}?token=${encodeURIComponent(token)}&returnUrl=${returnUrl}`
+          const newTab = window.open(url, '_blank', 'noopener,noreferrer')
+
+          // 新しいタブが開けた場合、元のタブを閉じる
+          if (newTab) {
+            // 少し待ってから元のタブを閉じる（新しいタブが確実に開くまで）
+            setTimeout(() => {
+              window.close()
+            }, 1000)
+          }
+          return
+        }
+      }
+
+      // トークンが取得できない場合は直接リダイレクト
+      console.warn('トークンが取得できませんでした')
+      const returnUrl = encodeURIComponent(window.location.href)
+      const url = `http://localhost:3001${path}?returnUrl=${returnUrl}`
+      const newTab = window.open(url, '_blank', 'noopener,noreferrer')
+
+      if (newTab) {
+        setTimeout(() => {
+          window.close()
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('CSPアプリへのリダイレクトに失敗:', error)
+      // エラー時は直接リダイレクト
+      const returnUrl = encodeURIComponent(window.location.href)
+      const url = `http://localhost:3001${path}?returnUrl=${returnUrl}`
+      const newTab = window.open(url, '_blank', 'noopener,noreferrer')
+
+      if (newTab) {
+        setTimeout(() => {
+          window.close()
+        }, 1000)
+      }
+    }
+  }
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -70,29 +122,27 @@ export default function QuickActions({
                 クラウドサービス プロビジョニングの管理
               </p>
               <div className="flex flex-col gap-3">
-                <Link href={`/projects/${projectId}/csp-provisioning`}>
-                  <Button
-                    variant="secondary"
-                    className="w-full justify-center"
-                    disabled={projectType === 'vendor'}
-                  >
-                    <span className="material-symbols-outlined mr-2 text-sm">
-                      list
-                    </span>
-                    プロビジョニング一覧
-                  </Button>
-                </Link>
-                <Link href={`/projects/${projectId}/csp-provisioning/new`}>
-                  <Button
-                    className="w-full justify-center"
-                    disabled={projectType === 'vendor'}
-                  >
-                    <span className="material-symbols-outlined mr-2 text-sm">
-                      add_circle
-                    </span>
-                    新規プロビジョニング
-                  </Button>
-                </Link>
+                <Button
+                  variant="secondary"
+                  className="w-full justify-center"
+                  disabled={projectType === 'vendor'}
+                  onClick={() => redirectToCSPApp(`/projects/${projectId}`)}
+                >
+                  <span className="material-symbols-outlined mr-2 text-sm">
+                    list
+                  </span>
+                  プロビジョニング一覧
+                </Button>
+                <Button
+                  className="w-full justify-center"
+                  disabled={projectType === 'vendor'}
+                  onClick={() => redirectToCSPApp(`/projects/${projectId}/new`)}
+                >
+                  <span className="material-symbols-outlined mr-2 text-sm">
+                    add_circle
+                  </span>
+                  新規プロビジョニング
+                </Button>
               </div>
             </div>
           </Card>

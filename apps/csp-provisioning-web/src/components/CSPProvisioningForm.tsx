@@ -86,7 +86,7 @@ export default function CSPProvisioningForm({
     <>
       {/* エラーメッセージ */}
       {error && (
-        <Card className="mb-6 bg-red-50 border-l-4 border-l-red-500 border-red-200">
+        <Card className="mb-6 bg-red-50 border-l-4 border-l-red-500 border-red-200 rounded-lg">
           <div className="flex items-start p-4">
             <div className="bg-red-100 rounded-full p-2 mr-4 flex-shrink-0">
               <span className="material-symbols-outlined text-red-600 text-xl">
@@ -104,7 +104,7 @@ export default function CSPProvisioningForm({
       )}
 
       {/* フォーム */}
-      <Card className="mb-8">
+      <Card className="mb-8 rounded-xl">
         <div className="p-6 sm:p-8">
           <form onSubmit={onSubmit} className="space-y-8">
             {/* プロジェクト情報 */}
@@ -117,7 +117,7 @@ export default function CSPProvisioningForm({
                   ? '編集対象プロジェクト'
                   : 'プロビジョニング対象プロジェクト'}
               </h2>
-              <Card className="bg-blue-50 border-blue-200">
+              <Card className="bg-blue-50 border-blue-200 rounded-lg">
                 <div className="p-4">
                   <div className="flex items-center">
                     <div className="bg-blue-100 rounded-full p-2 mr-3">
@@ -149,7 +149,7 @@ export default function CSPProvisioningForm({
                   </span>
                   現在のプロバイダー
                 </h2>
-                <Card className="bg-orange-50 border-orange-200">
+                <Card className="bg-orange-50 border-orange-200 rounded-lg">
                   <div className="p-4">
                     {getProviderDisplay(currentProvider)}
                     <p className="text-orange-700 text-sm mt-2 flex items-center">
@@ -240,29 +240,34 @@ export default function CSPProvisioningForm({
             {/* アクションボタン */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <Link href={cancelHref} className="flex-1">
-                <Button variant="secondary" className="w-full justify-center">
-                  <span className="material-symbols-outlined mr-2 text-sm">
+                <Button
+                  variant="secondary"
+                  className="w-full justify-center py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 rounded-lg transition-colors inline-flex items-center"
+                >
+                  <span className="material-symbols-outlined mr-2 text-sm leading-none">
                     cancel
                   </span>
-                  キャンセル
+                  <span className="leading-none">キャンセル</span>
                 </Button>
               </Link>
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 justify-center"
+                className="flex-1 justify-center py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-lg transition-colors font-medium inline-flex items-center"
               >
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    {isEdit ? '更新中...' : '作成中...'}
+                    <span className="leading-none">
+                      {isEdit ? '更新中...' : '作成中...'}
+                    </span>
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined mr-2 text-sm">
+                    <span className="material-symbols-outlined mr-2 text-sm leading-none">
                       {isEdit ? 'save' : 'send'}
                     </span>
-                    {submitButtonText}
+                    <span className="leading-none">{submitButtonText}</span>
                   </>
                 )}
               </Button>

@@ -35,7 +35,7 @@ services:
       context: ./apps/web_admin
       dockerfile: Dockerfile.dev
     ports:
-      - '3001:3001'
+      - '3010:3010'
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8080
@@ -58,6 +58,33 @@ services:
           target: /app/public
         - action: rebuild
           path: ./apps/web_admin/package.json
+
+  csp-provisioning-web:
+    build:
+      context: ./apps/csp-provisioning-web
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=development
+      - DOCKER_ENV=true
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    volumes:
+      - ./apps/csp-provisioning-web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - web
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/csp-provisioning-web/src
+          target: /app/src
+        - action: sync
+          path: ./apps/csp-provisioning-web/public
+          target: /app/public
+        - action: rebuild
+          path: ./apps/csp-provisioning-web/package.json
 
   api:
     build:

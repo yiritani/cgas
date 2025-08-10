@@ -7,8 +7,5 @@ export * from './layout'
 // Project Components
 export * from './project'
 
-// CSP Components
-export * from './csp'
-
 // Auth Components
 export * from './auth'

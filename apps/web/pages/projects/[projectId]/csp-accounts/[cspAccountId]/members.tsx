@@ -659,7 +659,6 @@ export default function CSPAccountMembers() {
         <div className="mb-8">
           <Button
             onClick={openAddMemberModal}
-            size="large"
             className="inline-flex items-center justify-center rounded-xl py-3 px-6"
           >
             <span className="material-symbols-outlined mr-2">person_add</span>
@@ -713,7 +712,6 @@ export default function CSPAccountMembers() {
                 </p>
                 <Button
                   onClick={openAddMemberModal}
-                  size="large"
                   className="inline-flex items-center justify-center rounded-xl py-3 px-6"
                 >
                   <span className="material-symbols-outlined mr-2">
@@ -806,7 +804,6 @@ export default function CSPAccountMembers() {
                       <Button
                         onClick={() => removeCSPMember(member.id)}
                         variant="secondary"
-                        size="small"
                         className="w-full bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300 inline-flex items-center justify-center rounded-xl py-2 px-4"
                       >
                         <span className="material-symbols-outlined mr-2 text-sm">
@@ -989,7 +986,6 @@ export default function CSPAccountMembers() {
                     <Button
                       onClick={addCSPMember}
                       className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl py-3 px-6"
-                      size="large"
                     >
                       <span className="material-symbols-outlined mr-2">
                         person_add
@@ -1000,7 +996,6 @@ export default function CSPAccountMembers() {
                       onClick={() => setShowAddMemberModal(false)}
                       variant="secondary"
                       className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl py-3 px-6"
-                      size="large"
                     >
                       <span className="material-symbols-outlined mr-2">
                         close

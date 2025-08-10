@@ -19,7 +19,7 @@ services:
       context: ./apps/web_admin
       dockerfile: Dockerfile
     ports:
-      - '3001:3001'
+      - '3010:3010'
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
@@ -28,6 +28,20 @@ services:
     depends_on:
       - api
       - csp-provisioning
+    restart: unless-stopped
+
+  csp-provisioning-web:
+    build:
+      context: ./apps/csp-provisioning-web
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - DOCKER_ENV=true
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    depends_on:
+      - web
     restart: unless-stopped
 
   api:
