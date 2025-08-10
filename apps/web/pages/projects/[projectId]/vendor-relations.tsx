@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
-import Layout from '../../../components/Layout'
+import { Layout } from '../../../components'
 import { useAuth } from '../../../contexts/AuthContext'
 
 interface Project {

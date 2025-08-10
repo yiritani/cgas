@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../../../contexts/AuthContext'
-import Layout from '../../../../../components/Layout'
+import { Layout, CSPProvisioningForm } from '../../../../../components'
 import Link from 'next/link'
 import { H1, H3, Button, Card } from '@sakura-ui/core'
-import CSPProvisioningForm from '../../../../../components/CSPProvisioningForm'
 
 interface CSPRequest {
-  id: number
+  id: string
   project_id: number
-  user_id: number
+  requested_by: string
   provider: 'aws' | 'gcp' | 'azure'
   account_name: string
   reason: string
@@ -71,7 +70,8 @@ const EditCSPProvisioningPage = () => {
         )
       }
 
-      if (cspRequest.user_id !== user?.id) {
+      // 申請者本人または管理者のみ編集可能
+      if (cspRequest.requested_by !== user?.email && user?.role !== 'admin') {
         throw new Error('このプロビジョニングを編集する権限がありません')
       }
 
@@ -333,6 +333,14 @@ const EditCSPProvisioningPage = () => {
                     </span>
                     <p className="text-gray-700 text-sm">
                       プロビジョニング中の状態でのみ編集が可能です
+                    </p>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="material-symbols-outlined text-green-500 text-sm mr-3 mt-0.5">
+                      admin_panel_settings
+                    </span>
+                    <p className="text-gray-700 text-sm">
+                      申請者本人または管理者が編集できます
                     </p>
                   </div>
                   <div className="flex items-start">

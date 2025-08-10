@@ -1,19 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../../contexts/AuthContext'
-import Layout from '../../../../components/Layout'
+import { Layout } from '../../../../components'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
+import useSWR from 'swr'
 
 interface CSPRequest {
-  id: number
+  id: string
   project_id: number
-  user_id: number
+  requested_by: string
   provider: 'aws' | 'gcp' | 'azure'
   account_name: string
   reason: string
   status: 'pending' | 'approved' | 'rejected'
-  reviewed_by?: number
+  reviewed_by?: string
   reviewed_at?: string
   reject_reason?: string
   created_at: string
@@ -49,11 +50,39 @@ const CSPProvisioningPage = () => {
   const router = useRouter()
   const { projectId } = router.query
   const { user, authFetch } = useAuth()
-  const [requests, setRequests] = useState<CSPRequest[]>([])
   const [project, setProject] = useState<Project | null>(null)
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
+
+  // SWRのfetcher関数
+  const fetcher = async (url: string) => {
+    const response = await authFetch(url)
+    if (!response.ok) {
+      throw new Error('データの取得に失敗しました')
+    }
+    return response.json()
+  }
+
+  // CSPリクエストをuseSWRで取得（リアルタイム更新）
+  const {
+    data: cspData,
+    error: cspError,
+    mutate,
+  } = useSWR(
+    projectId
+      ? `/api/csp-requests?project_id=${projectId}&page=${page}&limit=10`
+      : null,
+    fetcher,
+    {
+      refreshInterval: 5000, // 5秒ごとに自動更新
+      revalidateOnFocus: true, // フォーカス時に再取得
+      revalidateOnReconnect: true, // 再接続時に再取得
+    }
+  )
+
+  const requests = cspData?.data || []
+  const pagination = cspData?.pagination || null
+  const loading = !cspData && !cspError
 
   // Fetch project details
   const fetchProject = useCallback(async () => {
@@ -82,40 +111,18 @@ const CSPProvisioningPage = () => {
     }
   }, [projectId, authFetch])
 
-  // Fetch CSP provisioning requests for this project
-  const fetchCSPRequests = useCallback(
-    async (page = 1) => {
-      if (!projectId) return
-
-      try {
-        setLoading(true)
-        const response = await authFetch(
-          `/api/csp-requests?project_id=${projectId}&page=${page}&limit=10`
-        )
-        console.log('response', response)
-
-        if (!response.ok) {
-          throw new Error('CSP Provisioningの取得に失敗しました')
-        }
-
-        const data = await response.json()
-        setRequests(data.data || [])
-        setPagination(data.pagination || null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました')
-      } finally {
-        setLoading(false)
-      }
-    },
-    [projectId, authFetch]
-  )
-
   useEffect(() => {
     if (projectId && user) {
       fetchProject()
-      fetchCSPRequests()
     }
-  }, [projectId, user, fetchProject, fetchCSPRequests])
+  }, [projectId, user, fetchProject])
+
+  // CSPエラーをerrorステートに反映
+  useEffect(() => {
+    if (cspError) {
+      setError(cspError.message || 'データの取得に失敗しました')
+    }
+  }, [cspError])
 
   // Status display helper
   const getStatusBadge = (status: string) => {
@@ -230,7 +237,7 @@ const CSPProvisioningPage = () => {
                 onClick={() => {
                   setError(null)
                   fetchProject()
-                  fetchCSPRequests()
+                  mutate() // SWRでデータを再取得
                 }}
                 variant="secondary"
                 className="bg-red-600 hover:bg-red-700 text-white border-red-600"
@@ -372,7 +379,7 @@ const CSPProvisioningPage = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {requests.map((request) => (
+              {requests.map((request: CSPRequest) => (
                 <Card
                   key={request.id}
                   className="hover:shadow-lg transition-all duration-300 border border-gray-200 group bg-white"
@@ -429,18 +436,20 @@ const CSPProvisioningPage = () => {
                           詳細を見る
                         </Button>
                       </Link>
-                      {request.status === 'pending' && (
-                        <Link
-                          href={`/projects/${projectId}/csp-provisioning/${request.id}/edit`}
-                        >
-                          <Button className="w-full justify-center">
-                            <span className="material-symbols-outlined mr-2 text-sm">
-                              edit
-                            </span>
-                            編集
-                          </Button>
-                        </Link>
-                      )}
+                      {request.status === 'pending' &&
+                        (request.requested_by === user?.email ||
+                          user?.role === 'admin') && (
+                          <Link
+                            href={`/projects/${projectId}/csp-provisioning/${request.id}/edit`}
+                          >
+                            <Button className="w-full justify-center">
+                              <span className="material-symbols-outlined mr-2 text-sm">
+                                edit
+                              </span>
+                              編集
+                            </Button>
+                          </Link>
+                        )}
                       {request.status === 'approved' && (
                         <div className="text-center text-xs text-green-600 font-medium">
                           承認済み・編集不可
@@ -488,10 +497,11 @@ const CSPProvisioningPage = () => {
                 {/* ページネーションボタン */}
                 <div className="flex items-center gap-2">
                   <Button
-                    onClick={() =>
-                      pagination.hasPrev &&
-                      fetchCSPRequests(pagination.page - 1)
-                    }
+                    onClick={() => {
+                      if (pagination.hasPrev) {
+                        setPage(pagination.page - 1)
+                      }
+                    }}
                     disabled={!pagination.hasPrev}
                     variant="secondary"
                     size="small"
@@ -525,7 +535,7 @@ const CSPProvisioningPage = () => {
                             </span>,
                             <button
                               key={page}
-                              onClick={() => fetchCSPRequests(page)}
+                              onClick={() => setPage(page)}
                               className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                                 page === pagination.page
                                   ? 'bg-blue-600 text-white'
@@ -539,7 +549,7 @@ const CSPProvisioningPage = () => {
                         return (
                           <button
                             key={page}
-                            onClick={() => fetchCSPRequests(page)}
+                            onClick={() => setPage(page)}
                             className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                               page === pagination.page
                                 ? 'bg-blue-600 text-white'
@@ -553,10 +563,11 @@ const CSPProvisioningPage = () => {
                   </div>
 
                   <Button
-                    onClick={() =>
-                      pagination.hasNext &&
-                      fetchCSPRequests(pagination.page + 1)
-                    }
+                    onClick={() => {
+                      if (pagination.hasNext) {
+                        setPage(pagination.page + 1)
+                      }
+                    }}
                     disabled={!pagination.hasNext}
                     variant="secondary"
                     size="small"

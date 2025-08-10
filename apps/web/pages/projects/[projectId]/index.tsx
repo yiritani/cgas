@@ -2,14 +2,13 @@ import Head from 'next/head'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../contexts/AuthContext'
-import Layout from '../../../components/Layout'
-import AuthGuard from '../../../components/AuthGuard'
-import ProjectMembers, {
+import { Layout, AuthGuard } from '../../../components'
+import { ProjectMembers, QuickActions } from '../../../components'
+import type {
   ProjectMember,
   PaginationInfo,
   ProjectDetails,
-} from '../../../components/ProjectMembers'
-import QuickActions from '../../../components/QuickActions'
+} from '../../../components'
 import Link from 'next/link'
 import { H1, H2, H3, Button, Card } from '@sakura-ui/core'
 

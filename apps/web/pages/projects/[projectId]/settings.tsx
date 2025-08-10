@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import Layout from '../../../components/Layout'
+import { Layout, SettingCard } from '../../../components'
 import { useAuth } from '../../../contexts/AuthContext'
-import SettingCard, { colorThemes } from '../../../components/SettingCard'
+import { colorThemes } from '../../../components/ui/SettingCard'
 
 interface ProjectDetails {
   id: number

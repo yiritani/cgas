@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"csp-provisioning-service/internal/model"
 	"csp-provisioning-service/internal/repository"
@@ -190,12 +191,64 @@ func (s *cspRequestService) Review(ctx context.Context, id string, reviewerID st
 		return nil, err
 	}
 
-	// 承認の場合の処理はBFFが担当するため、ここでは承認処理のみ行う
+	// 承認の場合はCSPアカウントを自動作成
 	if req.Status == model.CSPRequestStatusApproved {
-		log.Printf("[INFO] CSP request %s has been approved. CSP account creation will be handled by BFF.", existingRequest.ID)
+		log.Printf("[INFO] CSP request %s has been approved. Creating CSP account...", existingRequest.ID)
+		err = s.createCSPAccount(ctx, existingRequest, reviewerID)
+		if err != nil {
+			log.Printf("[ERROR] Failed to create CSP account for request %s: %v", existingRequest.ID, err)
+			// CSPアカウント作成に失敗した場合は承認を取り消す
+			existingRequest.Status = model.CSPRequestStatusPending
+			existingRequest.ReviewedBy = nil
+			existingRequest.ReviewedAt = nil
+			existingRequest.RejectReason = nil
+			s.repo.Update(ctx, existingRequest)
+			return nil, fmt.Errorf("CSPアカウントの作成に失敗しました: %v", err)
+		}
+		log.Printf("[INFO] CSP account created successfully for request %s", existingRequest.ID)
 	}
 
 	return s.repo.SelectByID(ctx, id)
+}
+
+// createCSPAccount はCSP申請承認時にメインAPIサーバーにCSPアカウント作成を依頼
+func (s *cspRequestService) createCSPAccount(ctx context.Context, cspRequest *model.CSPRequest, reviewerID string) error {
+	// メインAPIサーバーのCSPアカウント自動作成エンドポイントを呼び出し
+	createReq := map[string]interface{}{
+		"csp_request_id": cspRequest.ID,
+		"provider":       string(cspRequest.Provider),
+		"account_name":   cspRequest.AccountName,
+		"project_id":     cspRequest.ProjectID,
+	}
+
+	reqBody, err := json.Marshal(createReq)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// HTTPリクエストを作成
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", s.mainAPIURL+"/api/internal/csp-accounts/auto-create", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("X-Creator-ID", reviewerID) // 承認者をCreatorとして設定
+
+	// HTTPリクエストを送信
+	resp, err := s.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("CSP account creation failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	log.Printf("[INFO] CSP account created successfully for request %s", cspRequest.ID)
+	return nil
 }
 
 func (s *cspRequestService) Delete(ctx context.Context, id string, requestedBy string) error {

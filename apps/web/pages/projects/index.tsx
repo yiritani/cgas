@@ -1,9 +1,7 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import Layout from '../../components/Layout'
-import AuthGuard from '../../components/AuthGuard'
-import ProjectList from '../../components/ProjectList'
+import { Layout, AuthGuard, ProjectList } from '../../components'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
 

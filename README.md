@@ -8,9 +8,9 @@ TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロー�
 ### マイクロサービス構成
 
 - **Main API** (Port 8080): ユーザー管理、プロジェクト管理、CSPアカウント管理
-- **CSP Provisioning Service** (Port 8081): CSP申請・承認ワークフロー
+- **CSP Provisioning Service** (Port 8081): CSP申請・承認ワークフロー (**Firestore使用**)
 - **PostgreSQL** (Port 5432): Main API用データベース
-- **CSP Provisioning DB** (Port 5433): CSP Provisioning Service用データベース
+- **Firestore Emulator** (Port 8080): CSP Provisioning Service用NoSQLデータベース（開発環境）
 
 ### マイクロフロントエンド構成
 
@@ -31,9 +31,11 @@ TurboRepo、Go、Next.js を使用し、Docker Compose でのホットリロー�
 
 - **Go 1.21**
 - **Gin** (Webフレームワーク)
-- **GORM** (ORM)
+- **GORM** (ORM - Main API用)
+- **Firebase SDK for Go** (Firestore - CSP Provisioning用)
 - **Wire** (依存性注入)
-- **PostgreSQL 16**
+- **PostgreSQL 16** (Main API)
+- **Google Cloud Firestore** (CSP Provisioning)
 
 ### 開発・運用
 
@@ -101,11 +103,14 @@ docker compose -f docker-compose.dev.yml up --watch
 ### CSP Provisioning Service (Port 8081)
 
 - **責任**: CSP申請・承認ワークフロー
-- **データベース**: PostgreSQL (Port 5433)
+- **データベース**: **Google Cloud Firestore** (NoSQL)
+- **開発環境**: Firestore Emulator (Port 8080)
 - **主要機能**:
   - CSP申請の作成・更新・削除
   - 管理者による承認・却下処理
   - プロジェクト権限チェック（Main API連携）
+  - **承認時の自動CSPアカウント作成**
+- **データ構造**: プロジェクトIDをドキュメントIDとし、申請をリスト形式で管理
 
 ### BFF (Backend for Frontend)
 
@@ -118,37 +123,59 @@ docker compose -f docker-compose.dev.yml up --watch
 
 ## データベース構成
 
-### Main API Database (Port 5432)
+### Main API Database (PostgreSQL - Port 5432)
 
 - **Database**: go_nextjs_db
 - **Tables**: users, projects, user_project_roles, csp_accounts, project_csp_accounts, csp_account_members
-
-### CSP Provisioning Database (Port 5433)
-
-- **Database**: csp_provisioning_db
-- **Tables**: csp_requests
-
-### 共通接続情報
-
 - **User**: postgres
 - **Password**: password
 - **Host**: localhost (Docker内では各サービス名)
 
+### CSP Provisioning Database (**Firestore**)
+
+- **開発環境**: Firestore Emulator (Port 8080)
+- **本番環境**: Google Cloud Firestore
+- **プロジェクトID**: `csp-provisioning-dev` (開発用)
+- **コレクション**: `csp_requests`
+- **データ構造**:
+  ```
+  csp_requests/
+    {project_id}/          # ドキュメントID = プロジェクトID
+      project_id: 1
+      requests: [           # CSP申請のリスト
+        {
+          id: "uuid",
+          requested_by: "user@example.com",
+          provider: "aws",
+          account_name: "test-account",
+          status: "pending",
+          ...
+        }
+      ]
+  ```
+
 ## 開発ワークフロー
 
-### CSP申請・承認フロー（新アーキテクチャ）
+### CSP申請・承認フロー（Firestoreベース）
 
-1. **申請作成**: Web App → CSP Provisioning Service
-2. **申請一覧**: Web Admin → CSP Provisioning Service
-3. **申請承認**: Web Admin → BFF → CSP Provisioning Service (承認) + Main API (CSPアカウント作成)
+1. **申請作成**: Web App → CSP Provisioning Service → **Firestore**
+2. **申請一覧**: Web Admin → CSP Provisioning Service → **Firestore** (リアルタイム更新)
+3. **申請承認**: Web Admin → CSP Provisioning Service → **Firestore** (承認) + Main API (CSPアカウント作成)
 
-### BFFによる統合処理
+### Firestore統合処理
 
 ```
-承認リクエスト → BFF
-├── Step 1: CSP Provisioning Service で承認処理
+承認リクエスト → CSP Provisioning Service
+├── Step 1: Firestoreで承認ステータス更新
 └── Step 2: 承認成功時、Main API でCSPアカウント自動作成
 ```
+
+### Firestoreの特徴
+
+- **NoSQLドキュメントデータベース**: 柔軟なスキーマ設計
+- **リアルタイム更新**: useSWRによる自動データ同期
+- **スケーラブル**: クラウドネイティブな設計
+- **オフライン対応**: ローカル開発でのEmulator使用
 
 ## API エンドポイント
 
@@ -161,12 +188,15 @@ GET    /api/csp-accounts       # CSPアカウント一覧
 POST   /api/internal/csp-accounts/auto-create  # CSPアカウント自動作成（内部API）
 ```
 
-### CSP Provisioning Service (8081)
+### CSP Provisioning Service (8081) - **Firestore連携**
 
 ```
-GET    /api/csp-requests       # CSP申請一覧
-POST   /api/csp-requests       # CSP申請作成
-PUT    /api/csp-requests/:id/review  # CSP申請承認・却下（管理者のみ）
+GET    /api/csp-requests                    # CSP申請一覧 (Firestore)
+POST   /api/csp-requests                    # CSP申請作成 (Firestore)
+GET    /api/csp-requests/:id                # CSP申請詳細 (Firestore)
+PUT    /api/csp-requests/:id                # CSP申請更新 (Firestore)
+PUT    /api/csp-requests/:id/review         # CSP申請承認・却下 (Firestore + CSPアカウント自動作成)
+DELETE /api/csp-requests/:id               # CSP申請削除 (Firestore)
 ```
 
 ### フロントエンドアプリ
@@ -197,5 +227,18 @@ docker compose -f docker-compose.dev.yml up -d
 ### 開発時の注意点
 
 - 環境変数の変更後は該当コンテナの再作成が必要
-- データベースマイグレーションは各サービス起動時に自動実行
+- **Main API**: PostgreSQLマイグレーションは起動時に自動実行
+- **CSP Provisioning**: Firestore Emulatorは起動時に自動初期化
 - JWT認証はMain APIで一元管理し、他サービスで検証
+- **Firestore**: データはエミュレーター再起動時にリセットされます
+
+### Firestore開発環境
+
+```bash
+# Firestore Emulator UI (開発中のデータ確認用)
+http://localhost:4000
+
+# Firestore設定ファイル
+apps/csp-provisioning-service/firebase.json
+apps/csp-provisioning-service/firestore.rules
+```

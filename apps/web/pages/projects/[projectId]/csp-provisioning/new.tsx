@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../../contexts/AuthContext'
-import Layout from '../../../../components/Layout'
+import { Layout, CSPProvisioningForm } from '../../../../components'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
-import CSPProvisioningForm from '../../../../components/CSPProvisioningForm'
 
 interface Project {
   id: number

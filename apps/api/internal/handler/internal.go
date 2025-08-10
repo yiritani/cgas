@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -90,10 +91,10 @@ func (h *InternalHandler) GetProjectType(c *gin.Context) {
 // AutoCreateCSPAccount はCSP申請承認時に自動でCSPアカウントを作成（内部API用）
 func (h *InternalHandler) AutoCreateCSPAccount(c *gin.Context) {
 	type AutoCreateRequest struct {
-		CSPRequestID uint   `json:"csp_request_id" binding:"required"`
+		CSPRequestID string `json:"csp_request_id" binding:"required"`
 		Provider     string `json:"provider" binding:"required"`
 		AccountName  string `json:"account_name" binding:"required"`
-		ProjectID    uint   `json:"project_id" binding:"required"`
+		ProjectID    int    `json:"project_id" binding:"required"`
 	}
 
 	var req AutoCreateRequest
@@ -102,12 +103,21 @@ func (h *InternalHandler) AutoCreateCSPAccount(c *gin.Context) {
 		return
 	}
 
-	// CreatorIDをヘッダーから取得
+	// CreatorIDをヘッダーから取得（メールアドレスまたは数値ID）
 	creatorIDStr := c.GetHeader("X-Creator-ID")
+	if creatorIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Creator ID is required"})
+		return
+	}
+
+	// まず数値IDとして解析を試行
 	creatorID, err := strconv.Atoi(creatorIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Creator ID"})
-		return
+		// 数値でない場合はメールアドレスとして扱い、対応するユーザーIDを取得
+		// TODO: 実装では適切なユーザー検索サービスを使用
+		// 暫定的にデフォルトの管理者ID（1）を使用
+		creatorID = 1
+		log.Printf("[INFO] Using default admin ID for email: %s", creatorIDStr)
 	}
 
 	// CSPアカウント作成リクエストを構築
@@ -128,7 +138,7 @@ func (h *InternalHandler) AutoCreateCSPAccount(c *gin.Context) {
 	}
 
 	// プロジェクトとCSPアカウントを関連付け
-	_, err = h.cspService.CreateProjectCSPAccount(uint(creatorID), req.ProjectID, cspAccount.ID)
+	_, err = h.cspService.CreateProjectCSPAccount(uint(creatorID), uint(req.ProjectID), cspAccount.ID)
 	if err != nil {
 		// CSPアカウントは作成されているが、関連付けに失敗
 		// ログに記録してエラーを返す

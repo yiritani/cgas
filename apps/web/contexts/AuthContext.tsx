@@ -64,6 +64,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const logout = async () => {
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('本当にログアウトしますか？');
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       await authService.logout()
       setUser(null)

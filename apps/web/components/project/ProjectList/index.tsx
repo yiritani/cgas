@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
-import ProjectCard from './ProjectCard'
+import ProjectCard from '../ProjectCard'
 
 interface Project {
   project_id: number

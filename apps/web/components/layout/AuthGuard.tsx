@@ -1,6 +1,6 @@
 import { useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/router'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import Layout from './Layout'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'

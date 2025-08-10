@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Button, Card } from '@sakura-ui/core'
@@ -73,7 +73,7 @@ export default function Layout({ children }: LayoutProps) {
                   onClick={logout}
                   variant="secondary"
                   size="small"
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
+                  className="bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined mr-1 text-sm">
                     logout
@@ -86,21 +86,17 @@ export default function Layout({ children }: LayoutProps) {
                 <Link href="/auth/login">
                   <Button
                     variant="secondary"
-                    size="small"
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center"
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center py-2 px-4"
                   >
-                    <span className="material-symbols-outlined mr-1 text-sm">
+                    <span className="material-symbols-outlined mr-2">
                       login
                     </span>
                     ログイン
                   </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button
-                    size="small"
-                    className="bg-white text-blue-600 hover:bg-blue-50 rounded-xl inline-flex items-center justify-center"
-                  >
-                    <span className="material-symbols-outlined mr-1 text-sm">
+                  <Button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 rounded-xl inline-flex items-center justify-center py-2 px-4">
+                    <span className="material-symbols-outlined mr-2">
                       person_add
                     </span>
                     新規登録

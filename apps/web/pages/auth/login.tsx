@@ -2,7 +2,7 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../contexts/AuthContext'
-import LoginForm from '../../components/auth/LoginForm'
+import { LoginForm } from '../../components'
 
 export default function LoginPage() {
   const { user, loading } = useAuth()

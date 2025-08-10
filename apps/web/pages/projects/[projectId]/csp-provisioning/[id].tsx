@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../../../../contexts/AuthContext'
-import Layout from '../../../../components/Layout'
+import { Layout } from '../../../../components'
 import Link from 'next/link'
 import { Button, Card } from '@sakura-ui/core'
 
 interface CSPRequest {
-  id: number
+  id: string
   project_id: number
-  user_id: number
+  requested_by: string
   provider: 'aws' | 'gcp' | 'azure'
   account_name: string
   reason: string
   status: 'pending' | 'approved' | 'rejected'
-  reviewed_by?: number
+  reviewed_by?: string
   reviewed_at?: string
   reject_reason?: string
   created_at: string
@@ -238,8 +238,11 @@ const CSPProvisioningDetailPage = () => {
     )
   }
 
-  const canEdit = request.status === 'pending' && request.user_id === user?.id
-  const canDelete = request.user_id === user?.id
+  const canEdit =
+    request.status === 'pending' &&
+    (request.requested_by === user?.email || user?.role === 'admin')
+  const canDelete =
+    request.requested_by === user?.email || user?.role === 'admin'
 
   return (
     <Layout>
