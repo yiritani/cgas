@@ -31,15 +31,12 @@ const Layout = ({ children, title = 'CSP Provisioning' }: LayoutProps) => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center gap-8">
-                <Link
-                  href="/"
-                  className="text-xl font-semibold text-white hover:text-blue-100 transition-colors"
-                >
+                <div className="text-xl font-semibold text-white transition-colors">
                   <span className="material-symbols-outlined inline-block mr-2 text-2xl align-middle">
                     cloud
                   </span>
                   CGAS Provisioning
-                </Link>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
