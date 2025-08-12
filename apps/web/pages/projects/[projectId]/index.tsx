@@ -300,7 +300,7 @@ export default function ProjectDetail() {
               アクセス権限がありません
             </p>
             <Link href="/projects">
-              <Button className="w-full" size="large">
+              <Button className="w-full" size="lg">
                 <span className="material-symbols-outlined mr-2">
                   arrow_back
                 </span>

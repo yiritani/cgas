@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: Go-NextJS API
-  description: RESTful API for user management and authentication
+  title: CGAS Directory Service API
+  description: RESTful API for user management, project management, and CSP account management
   version: 1.0.0
   contact:
     name: API Support
-    email: support@example.com
+    email: support@cgas.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -343,6 +343,227 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # Project Management Endpoints
+  /api/projects:
+    get:
+      summary: Get projects by type
+      description: Returns a list of projects, optionally filtered by type (e.g., vendor)
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Filter projects by type
+          schema:
+            type: string
+            enum: [vendor, client]
+      responses:
+        '200':
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create project
+      description: Creates a new project
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/projects/me:
+    get:
+      summary: Get user's projects
+      description: Returns projects that the current user is a member of
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/projects/{id}:
+    get:
+      summary: Get project by ID
+      description: Returns a specific project by its ID
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update project
+      description: Updates an existing project
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete project
+      description: Deletes a project (owner only)
+      tags:
+        - Project Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Project deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Owner role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -393,6 +614,94 @@ components:
         - role
         - created_at
         - updated_at
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique project identifier
+          example: 1
+        name:
+          type: string
+          description: Project name
+          example: ACME Corp Project
+        description:
+          type: string
+          description: Project description
+          example: Main project for ACME Corporation
+        type:
+          type: string
+          description: Project type
+          enum:
+            - vendor
+            - client
+          example: vendor
+        organization_id:
+          type: integer
+          format: int64
+          description: Organization ID
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Project creation timestamp
+          example: '2023-01-15T09:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2023-01-15T09:30:00Z'
+      required:
+        - id
+        - name
+        - type
+        - organization_id
+        - created_at
+        - updated_at
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Project name
+          minLength: 1
+          example: New Project
+        description:
+          type: string
+          description: Project description
+          example: Description of the new project
+        type:
+          type: string
+          description: Project type
+          enum:
+            - vendor
+            - client
+          example: vendor
+        organization_id:
+          type: integer
+          format: int64
+          description: Organization ID
+          example: 1
+      required:
+        - name
+        - type
+        - organization_id
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Project name
+          minLength: 1
+          example: Updated Project
+        description:
+          type: string
+          description: Project description
+          example: Updated description
 
     RegisterRequest:
       type: object
@@ -511,3 +820,5 @@ tags:
     description: Current user profile operations
   - name: User Management
     description: User CRUD operations
+  - name: Project Management
+    description: Project and member management operations

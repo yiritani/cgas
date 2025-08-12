@@ -199,7 +199,7 @@ export default function ProjectMembers({
                             changingRole === member.user_id
                           }
                           variant="secondary"
-                          size="small"
+                          size="sm"
                           className="bg-red-50 hover:bg-red-100 text-red-700"
                         >
                           {removingMember === member.user_id ? (
@@ -231,7 +231,7 @@ export default function ProjectMembers({
                   onClick={() => fetchMembers(currentPage - 1)}
                   disabled={!pagination.hasPrev}
                   variant="secondary"
-                  size="small"
+                  size="sm"
                 >
                   <span className="material-symbols-outlined mr-1 text-sm">
                     chevron_left
@@ -250,7 +250,7 @@ export default function ProjectMembers({
                   onClick={() => fetchMembers(currentPage + 1)}
                   disabled={!pagination.hasNext}
                   variant="secondary"
-                  size="small"
+                  size="sm"
                 >
                   次のページ
                   <span className="material-symbols-outlined ml-1 text-sm">

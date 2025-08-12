@@ -107,7 +107,7 @@ export default function AuthGuard({
               <Link href={redirectTo}>
                 <Button
                   className="w-full inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-                  size="large"
+                  size="lg"
                 >
                   <span className="material-symbols-outlined mr-2 text-base">
                     login
@@ -120,7 +120,7 @@ export default function AuthGuard({
                 <Button
                   variant="secondary"
                   className="w-full inline-flex items-center justify-center rounded-xl border-2 border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 font-medium shadow-sm transition-all duration-200 hover:shadow-md"
-                  size="large"
+                  size="lg"
                 >
                   <span className="material-symbols-outlined mr-2 text-base">
                     home

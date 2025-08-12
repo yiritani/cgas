@@ -83,12 +83,12 @@ export default function ProjectsIndex() {
                   <Link href="/projects/new">
                     <Button
                       className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl px-6 bg-gradient-to-r from-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105"
-                      size="large"
+                      size="lg"
                     >
-                      <span className="material-symbols-outlined mr-2 text-base">
+                      <span className="material-symbols-outlined mr-2 text-base align-middle">
                         add_circle
                       </span>
-                      新規プロジェクト作成
+                      <span className="align-middle">新規プロジェクト作成</span>
                     </Button>
                   </Link>
                 </div>
@@ -152,7 +152,7 @@ export default function ProjectsIndex() {
                       <p className="text-red-800 mb-4">{error}</p>
                       <Button
                         onClick={fetchProjects}
-                        size="small"
+                        size="sm"
                         className="inline-flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium shadow-sm transition-all duration-200 hover:shadow-md"
                       >
                         <span className="material-symbols-outlined mr-2 text-sm">

@@ -60,7 +60,7 @@ export default function ProjectList({
                 効率的に管理しませんか？
               </p>
               <Link href="/projects/new">
-                <Button size="large" className="mx-auto">
+                <Button size="lg" className="mx-auto">
                   <span className="material-symbols-outlined mr-2">
                     add_circle
                   </span>

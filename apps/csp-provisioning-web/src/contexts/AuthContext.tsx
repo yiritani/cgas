@@ -18,8 +18,6 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (token: string) => Promise<void>
-  logout: () => void
   authFetch: (url: string, options?: RequestInit) => Promise<Response>
   returnUrl: string | null
   goBack: () => void
@@ -114,20 +112,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [authFetch])
 
-  // ログイン
-  const login = async (token: string) => {
-    setToken(token)
-    await fetchUser()
-  }
-
-  // ログアウト
-  const logout = () => {
-    removeToken()
-    setUser(null)
-    // メインアプリのログアウトページにリダイレクト
-    window.location.href = 'http://localhost:3000/auth/login'
-  }
-
   // メインアプリに戻る
   const goBack = () => {
     if (returnUrl) {
@@ -175,8 +159,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       value={{
         user,
         loading,
-        login,
-        logout,
         authFetch,
         returnUrl,
         goBack,

@@ -292,7 +292,7 @@ export default function NewProject() {
                     <Button
                       type="submit"
                       disabled={loading}
-                      size="large"
+                      size="lg"
                       className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none inline-flex items-center justify-center rounded-xl"
                     >
                       {loading ? (
@@ -314,7 +314,7 @@ export default function NewProject() {
                       <Button
                         type="button"
                         variant="secondary"
-                        size="large"
+                        size="lg"
                         disabled={loading}
                         className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl"
                       >

@@ -310,7 +310,7 @@ export default function ProjectCSPAccountsPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   {isVendorProject ? (
                     <Button
-                      size="large"
+                      size="lg"
                       disabled
                       className="w-full sm:w-auto py-3 px-6 flex items-center justify-center rounded-lg opacity-50 cursor-not-allowed"
                     >
@@ -327,7 +327,7 @@ export default function ProjectCSPAccountsPage() {
                       className="no-underline hover:no-underline"
                     >
                       <Button
-                        size="large"
+                        size="lg"
                         className="w-full sm:w-auto py-3 px-6 flex items-center justify-center rounded-lg"
                       >
                         <span className="material-symbols-outlined mr-2 leading-none no-underline">
@@ -346,7 +346,7 @@ export default function ProjectCSPAccountsPage() {
                     {isVendorProject ? (
                       <Button
                         variant="secondary"
-                        size="large"
+                        size="lg"
                         className="w-full sm:w-auto py-3 px-6 flex items-center justify-center rounded-lg"
                         disabled
                       >
@@ -360,7 +360,7 @@ export default function ProjectCSPAccountsPage() {
                     ) : (
                       <Button
                         variant="secondary"
-                        size="large"
+                        size="lg"
                         className="w-full sm:w-auto py-3 px-6 flex items-center justify-center rounded-lg"
                       >
                         <span className="material-symbols-outlined mr-2 leading-none no-underline">
@@ -479,7 +479,7 @@ export default function ProjectCSPAccountsPage() {
                           >
                             <Button
                               variant="secondary"
-                              size="small"
+                              size="sm"
                               className="w-full justify-center py-3 px-6 flex items-center rounded-lg"
                             >
                               <span className="material-symbols-outlined mr-2 text-sm leading-none no-underline">
@@ -509,7 +509,7 @@ export default function ProjectCSPAccountsPage() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     {isVendorProject ? (
                       <Button
-                        size="large"
+                        size="lg"
                         disabled
                         className="w-full sm:w-auto py-3 px-6 flex items-center justify-center rounded-lg opacity-50 cursor-not-allowed"
                       >
@@ -525,7 +525,7 @@ export default function ProjectCSPAccountsPage() {
                         href={`/projects/${projectId}/csp-provisioning/new`}
                         className="no-underline hover:no-underline"
                       >
-                        <Button className="w-full sm:w-auto h-12 rounded-lg font-medium flex items-center justify-center px-6">
+                        <Button className="w-full sm:w-auto h-12 rounded-lg font-medium flex items-center justify-center px-6" size="lg">
                           <span className="material-symbols-outlined mr-2 text-lg leading-none no-underline">
                             add_circle
                           </span>
